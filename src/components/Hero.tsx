@@ -27,18 +27,14 @@ export default function Hero() {
           Exclusieve photobooth voor elk event
         </motion.p>
 
-        <motion.h1
-          className="font-heading text-[clamp(3.5rem,12vw,9rem)] font-bold leading-[0.85] tracking-[-0.02em] text-foreground"
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <img
-  src="/heynoona-logo.svg"
+        <motion.img
+  src="/heynoona logo.svg"
   alt="HeyNoona"
-  className="w-64 md:w-[32rem] h-auto"
+  className="mx-auto w-[clamp(18rem,70vw,46rem)] h-auto"
+  initial={{ opacity: 0, y: 40 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.9, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
 />
-        </motion.h1>
 
         <motion.div
           className="mx-auto my-6 h-px w-16 bg-foreground/30"
