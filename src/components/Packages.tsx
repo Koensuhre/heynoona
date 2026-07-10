@@ -12,6 +12,7 @@ const packages = [
     name: "Roze",
     emoji: "🌸",
     price: "€185",
+    vat: "excl. BTW",
     color: "bg-pink/25",
     borderColor: "border-pink/30",
     glowColor: "hover:shadow-pink/20",
@@ -29,6 +30,7 @@ const packages = [
     name: "Blauw",
     emoji: "💙",
     price: "€250",
+    vat: "excl. BTW",
     color: "bg-blue/25",
     borderColor: "border-blue/30",
     glowColor: "hover:shadow-blue/20",
@@ -47,6 +49,7 @@ const packages = [
     name: "Groen",
     emoji: "💚",
     price: "€325",
+      vat: "excl. BTW",
     color: "bg-green/25",
     borderColor: "border-green/30",
     glowColor: "hover:shadow-green/20",
@@ -124,9 +127,14 @@ export default function Packages() {
                     </h3>
                   </div>
 
-                  <p className="font-heading mb-8 text-5xl font-bold text-foreground md:text-6xl">
-                    {pkg.price}
-                  </p>
+                  <div className="mb-8 flex items-end justify-center gap-2">
+  <span className="font-heading text-5xl font-bold text-foreground md:text-6xl">
+    {pkg.price}
+  </span>
+  <span className="mb-1 text-xs text-foreground/60">
+    excl. BTW
+  </span>
+</div>
 
                   <ul className="mb-10 space-y-3">
                     {pkg.features.map((feature) => (
