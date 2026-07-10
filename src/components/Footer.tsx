@@ -56,7 +56,14 @@ export default function Footer() {
       <div className="mx-auto mt-12 max-w-7xl px-6 md:px-10">
         <div className="flex flex-col items-center justify-between gap-4 border-t border-foreground/5 pt-8 md:flex-row">
           <p className="text-xs text-foreground/30">
-            © {new Date().getFullYear()} HeyNoona.nl — Alle rechten voorbehouden
+            © {new Date().getFullYear()} HeyNoona.nl — Alle rechten voorbehouden — <a
+  href="https://webagencytwente.nl"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="transition-colors hover:text-foreground"
+>
+  Design Web Agency Twente
+</a>
           </p>
           <p className="text-xs text-foreground/30">
             Photobooth huren · Bruiloft · Verjaardag · Nederland
