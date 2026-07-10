@@ -38,7 +38,7 @@ export default function Navbar() {
       >
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 md:px-10">
           <a
-            href="#"
+            href="https://heynoona.vercel.app"
             className="font-heading text-2xl font-bold tracking-tight text-foreground md:text-3xl"
           >
             HeyNoona

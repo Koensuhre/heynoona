@@ -30,6 +30,7 @@ export const PACKAGES: Package[] = [
       "Onbeperkt digitale foto's",
       "Achtergrond layout",
       "Foto's digitaal toegestuurd",
+      "Prijzen excl. BTW"
     ],
   },
   {
