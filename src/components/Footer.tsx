@@ -61,6 +61,7 @@ export default function Footer() {
           <p className="text-xs text-foreground/30">
             Photobooth huren · Bruiloft · Verjaardag · Nederland
           </p>
+          
         </div>
       </div>
     </footer>

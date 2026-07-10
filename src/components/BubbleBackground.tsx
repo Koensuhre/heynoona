@@ -34,7 +34,7 @@ interface BubbleBackgroundProps {
 export default function BubbleBackground({
   count = 18,
   className = "",
-  intensity = "medium",
+  intensity = "heavy",
 }: BubbleBackgroundProps) {
   const bubbles = useMemo(() => generateBubbles(count), [count]);
   const mouseX = useMotionValue(0);
