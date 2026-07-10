@@ -145,7 +145,7 @@ export default function Packages() {
                   </ul>
 
                   <Button
-                    href="mailto:hey.noona@outlook.com"
+                    href="/boeken"
                     variant={pkg.popular ? "primary" : "secondary"}
                     className="w-full"
                   >
