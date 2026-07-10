@@ -10,16 +10,14 @@ export default function Hero() {
   return (
     <section className="relative flex min-h-screen items-center justify-center overflow-hidden">
       {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-pink/30 via-background-pink to-background" />
-      <FloatingGradient color="pink" position="-top-32 -left-32" size="lg" />
-      <FloatingGradient color="blue" position="top-1/3 -right-48" size="md" />
+<div className="absolute inset-0 bg-gradient-to-br from-[#FFD1D3] via-[#FFE5E6] to-background" />      <FloatingGradient color="blue" position="top-1/3 -right-48" size="md" />
       <FloatingGradient color="green" position="-bottom-32 left-1/4" size="md" />
       <BubbleBackground count={22} intensity="heavy" />
 
       {/* Content */}
       <div className="relative z-10 mx-auto max-w-5xl px-6 py-32 text-center">
         <motion.p
-          className="mb-6 text-[10px] font-medium uppercase tracking-[0.35em] text-foreground/60 md:text-xs"
+          className="mb-6 text-[10px] font-bold uppercase tracking-[0.35em] text-foreground/60 md:text-xs"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.3 }}

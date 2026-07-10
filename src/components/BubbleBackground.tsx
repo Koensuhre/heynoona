@@ -16,12 +16,12 @@ interface Bubble {
 function generateBubbles(count: number): Bubble[] {
   return Array.from({ length: count }, (_, i) => ({
     id: i,
-    size: Math.random() * 120 + 30,
+    size: Math.random() * 160 + 50,
     x: Math.random() * 100,
     y: Math.random() * 100,
     delay: Math.random() * 5,
     duration: Math.random() * 8 + 10,
-    opacity: Math.random() * 0.5 + 0.15,
+    opacity: Math.random() * 0.4 + 0.75,
   }));
 }
 
