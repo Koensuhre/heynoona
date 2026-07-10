@@ -33,9 +33,11 @@ export default function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
         >
-          HEY
-          <br className="sm:hidden" />
-          NOONA
+          <img
+  src="/heynoona-logo.svg"
+  alt="HeyNoona"
+  className="w-64 md:w-[32rem] h-auto"
+/>
         </motion.h1>
 
         <motion.div
