@@ -56,7 +56,7 @@ export default function Navbar() {
               </a>
             ))}
             <a
-              href="mailto:hey.noona@outlook.com"
+              href="/boeken"
               className="btn-glow rounded-full bg-foreground px-6 py-2.5 text-xs font-medium uppercase tracking-[0.15em] text-white transition-all hover:shadow-lg hover:shadow-pink/25"
             >
               Boek nu
@@ -99,7 +99,7 @@ export default function Navbar() {
           </a>
         ))}
         <a
-          href="mailto:hey.noona@outlook.com"
+          href="/boeken"
           className="btn-glow rounded-full bg-foreground px-8 py-3 text-sm font-medium uppercase tracking-[0.15em] text-white"
           onClick={() => setMobileOpen(false)}
         >

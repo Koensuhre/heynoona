@@ -65,7 +65,7 @@ export default function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 1.1 }}
         >
-          <Button href="mailto:hey.noona@outlook.com" variant="primary">
+          <Button href="/boeken" variant="primary">
             Boek jouw kleur
           </Button>
           <Button href="#pakketten" variant="secondary">

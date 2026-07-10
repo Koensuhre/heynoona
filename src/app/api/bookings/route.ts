@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { v4 as uuidv4 } from "uuid";
 import {
   createBooking,
   getBookedSlotsForDate,
@@ -7,7 +6,9 @@ import {
   isSlotAvailable,
 } from "@/lib/db";
 import { sendBookingEmails } from "@/lib/email";
-import { PACKAGES, TIME_SLOTS } from "@/lib/packages";
+import { PACKAGES, TIME_SLOTS, EVENT_TYPES } from "@/lib/packages";
+import { validateContactDetails, hasErrors } from "@/lib/validation";
+import type { ContactDetails } from "@/types/booking";
 
 export const runtime = "nodejs";
 
@@ -15,11 +16,17 @@ interface BookingBody {
   date: string;
   startTime: string;
   package: string;
-  name: string;
-  email: string;
-  phone: string;
   eventType: string;
+  firstName: string;
+  lastName: string;
+  company?: string;
+  phone: string;
+  email: string;
+  address?: string;
+  postalCode?: string;
+  city?: string;
   message?: string;
+  termsAccepted: boolean;
 }
 
 function isValidDate(date: string): boolean {
@@ -49,12 +56,12 @@ export async function GET(request: NextRequest) {
 
   try {
     if (date) {
-      const slots = getBookedSlotsForDate(date);
+      const slots = await getBookedSlotsForDate(date);
       return NextResponse.json({ date, bookedSlots: slots });
     }
 
     if (year && month) {
-      const slots = getBookedSlotsForMonth(Number(year), Number(month));
+      const slots = await getBookedSlotsForMonth(Number(year), Number(month));
       return NextResponse.json({
         year: Number(year),
         month: Number(month),
@@ -83,22 +90,20 @@ export async function POST(request: NextRequest) {
       date,
       startTime,
       package: packageId,
-      name,
-      email,
-      phone,
       eventType,
+      firstName,
+      lastName,
+      company,
+      phone,
+      email,
+      address,
+      postalCode,
+      city,
       message,
+      termsAccepted,
     } = body;
 
-    if (
-      !date ||
-      !startTime ||
-      !packageId ||
-      !name?.trim() ||
-      !email?.trim() ||
-      !phone?.trim() ||
-      !eventType
-    ) {
+    if (!date || !startTime || !packageId || !eventType) {
       return NextResponse.json(
         { error: "Vul alle verplichte velden in." },
         { status: 400 }
@@ -120,6 +125,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!EVENT_TYPES.includes(eventType)) {
+      return NextResponse.json(
+        { error: "Ongeldig evenement geselecteerd." },
+        { status: 400 }
+      );
+    }
+
     const slot = TIME_SLOTS.find((s) => s.start === startTime);
     if (!slot) {
       return NextResponse.json(
@@ -128,33 +140,57 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return NextResponse.json(
-        { error: "Ongeldig e-mailadres." },
-        { status: 400 }
-      );
+    const contact: ContactDetails = {
+      firstName: firstName ?? "",
+      lastName: lastName ?? "",
+      company: company ?? "",
+      phone: phone ?? "",
+      email: email ?? "",
+      address: address ?? "",
+      postalCode: postalCode ?? "",
+      city: city ?? "",
+      message: message ?? "",
+      termsAccepted: Boolean(termsAccepted),
+    };
+
+    const fieldErrors = validateContactDetails(contact);
+    if (hasErrors(fieldErrors)) {
+      const firstError = Object.values(fieldErrors)[0];
+      return NextResponse.json({ error: firstError, fieldErrors }, { status: 400 });
     }
 
-    if (!isSlotAvailable(date, startTime)) {
+    if (!(await isSlotAvailable(date, startTime))) {
       return NextResponse.json(
         { error: "Dit tijdslot is helaas net geboekt. Kies een ander moment." },
         { status: 409 }
       );
     }
 
-    const booking = createBooking(uuidv4(), {
+    const booking = await createBooking({
       date,
       startTime: slot.start,
       endTime: slot.end,
       package: packageId,
-      name: name.trim(),
-      email: email.trim().toLowerCase(),
-      phone: phone.trim(),
       eventType,
-      message: message?.trim(),
+      firstName: contact.firstName.trim(),
+      lastName: contact.lastName.trim(),
+      company: contact.company.trim() || undefined,
+      phone: contact.phone.trim(),
+      email: contact.email.trim().toLowerCase(),
+      address: contact.address.trim() || undefined,
+      postalCode: contact.postalCode.trim() || undefined,
+      city: contact.city.trim() || undefined,
+      message: contact.message.trim() || undefined,
+      termsAccepted: contact.termsAccepted,
     });
 
-    await sendBookingEmails(booking);
+    try {
+      await sendBookingEmails(booking);
+    } catch (emailError) {
+      // De boeking is al opgeslagen en het tijdslot is dus terecht bezet.
+      // Een mislukte e-mail mag de boeking niet ongedaan maken.
+      console.error("[bookings POST] e-mail versturen mislukt", emailError);
+    }
 
     return NextResponse.json({ success: true, booking }, { status: 201 });
   } catch (error) {

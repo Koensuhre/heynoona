@@ -28,7 +28,7 @@ export default function CTA() {
           <p className="mb-12 text-lg text-foreground/60 md:text-xl">
             Boek vandaag nog jouw kleur.
           </p>
-          <Button href="mailto:hey.noona@outlook.com" variant="primary">
+          <Button href="/boeken" variant="primary">
             Boek nu
           </Button>
         </motion.div>

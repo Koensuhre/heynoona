@@ -20,17 +20,26 @@ function getTransporter() {
   });
 }
 
-function buildAdminEmailHtml(booking: Booking): string {
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function buildAdminEmailHtml(booking: Booking, opts?: { heading?: string; intro?: string }): string {
   const pkg = getPackageById(booking.package as PackageId);
   const dateFormatted = formatDateNL(booking.date);
+  const fullName = `${booking.firstName} ${booking.lastName}`;
 
   return `
     <!DOCTYPE html>
     <html>
     <head><meta charset="utf-8"></head>
     <body style="font-family: Inter, sans-serif; color: #111; max-width: 600px; margin: 0 auto; padding: 32px;">
-      <h1 style="font-size: 24px; margin-bottom: 8px;">Nieuwe boeking — HeyNoona</h1>
-      <p style="color: #666; margin-bottom: 32px;">Er is een nieuwe photobooth boeking binnengekomen.</p>
+      <h1 style="font-size: 24px; margin-bottom: 8px;">${opts?.heading ?? "Nieuwe boeking — HeyNoona"}</h1>
+      <p style="color: #666; margin-bottom: 32px;">${opts?.intro ?? "Er is een nieuwe photobooth boeking binnengekomen."}</p>
 
       <table style="width: 100%; border-collapse: collapse;">
         <tr><td style="padding: 12px 0; border-bottom: 1px solid #eee; color: #888; width: 140px;">Datum</td>
@@ -39,16 +48,20 @@ function buildAdminEmailHtml(booking: Booking): string {
             <td style="padding: 12px 0; border-bottom: 1px solid #eee; font-weight: 600;">${booking.startTime} – ${booking.endTime}</td></tr>
         <tr><td style="padding: 12px 0; border-bottom: 1px solid #eee; color: #888;">Pakket</td>
             <td style="padding: 12px 0; border-bottom: 1px solid #eee; font-weight: 600;">${pkg?.emoji ?? ""} ${pkg?.name ?? booking.package} (${pkg?.priceLabel ?? ""})</td></tr>
+        <tr><td style="padding: 12px 0; border-bottom: 1px solid #eee; color: #888;">Evenement</td>
+            <td style="padding: 12px 0; border-bottom: 1px solid #eee;">${escapeHtml(booking.eventType)}</td></tr>
         <tr><td style="padding: 12px 0; border-bottom: 1px solid #eee; color: #888;">Naam</td>
-            <td style="padding: 12px 0; border-bottom: 1px solid #eee;">${booking.name}</td></tr>
+            <td style="padding: 12px 0; border-bottom: 1px solid #eee;">${escapeHtml(fullName)}</td></tr>
+        ${booking.company ? `<tr><td style="padding: 12px 0; border-bottom: 1px solid #eee; color: #888;">Bedrijf</td>
+            <td style="padding: 12px 0; border-bottom: 1px solid #eee;">${escapeHtml(booking.company)}</td></tr>` : ""}
         <tr><td style="padding: 12px 0; border-bottom: 1px solid #eee; color: #888;">E-mail</td>
             <td style="padding: 12px 0; border-bottom: 1px solid #eee;"><a href="mailto:${booking.email}">${booking.email}</a></td></tr>
         <tr><td style="padding: 12px 0; border-bottom: 1px solid #eee; color: #888;">Telefoon</td>
             <td style="padding: 12px 0; border-bottom: 1px solid #eee;"><a href="tel:${booking.phone}">${booking.phone}</a></td></tr>
-        <tr><td style="padding: 12px 0; border-bottom: 1px solid #eee; color: #888;">Event</td>
-            <td style="padding: 12px 0; border-bottom: 1px solid #eee;">${booking.eventType}</td></tr>
-        ${booking.message ? `<tr><td style="padding: 12px 0; color: #888; vertical-align: top;">Bericht</td>
-            <td style="padding: 12px 0;">${booking.message}</td></tr>` : ""}
+        ${booking.address ? `<tr><td style="padding: 12px 0; border-bottom: 1px solid #eee; color: #888; vertical-align: top;">Adres</td>
+            <td style="padding: 12px 0; border-bottom: 1px solid #eee;">${escapeHtml(booking.address)}${booking.postalCode ? `, ${escapeHtml(booking.postalCode)}` : ""}${booking.city ? ` ${escapeHtml(booking.city)}` : ""}</td></tr>` : ""}
+        ${booking.message ? `<tr><td style="padding: 12px 0; color: #888; vertical-align: top;">Opmerkingen</td>
+            <td style="padding: 12px 0;">${escapeHtml(booking.message)}</td></tr>` : ""}
       </table>
 
       <p style="margin-top: 32px; font-size: 12px; color: #aaa;">Boeking ID: ${booking.id}</p>
@@ -57,17 +70,35 @@ function buildAdminEmailHtml(booking: Booking): string {
   `;
 }
 
-function buildCustomerEmailHtml(booking: Booking): string {
+function buildCustomerEmailHtml(
+  booking: Booking,
+  variant: "confirmation" | "cancellation" | "reminder" = "confirmation"
+): string {
   const pkg = getPackageById(booking.package as PackageId);
   const dateFormatted = formatDateNL(booking.date);
+
+  const copy = {
+    confirmation: {
+      title: `Bedankt, ${escapeHtml(booking.firstName)}! 🫧`,
+      intro: "Je boeking bij HeyNoona is bevestigd. We kijken ernaar uit!",
+    },
+    reminder: {
+      title: `Bijna zo ver, ${escapeHtml(booking.firstName)}! 🫧`,
+      intro: "Een korte herinnering aan je aankomende photobooth-boeking bij HeyNoona.",
+    },
+    cancellation: {
+      title: `Boeking geannuleerd`,
+      intro: `Hoi ${escapeHtml(booking.firstName)}, je boeking bij HeyNoona is geannuleerd. Neem gerust contact op als je vragen hebt of opnieuw wilt boeken.`,
+    },
+  }[variant];
 
   return `
     <!DOCTYPE html>
     <html>
     <head><meta charset="utf-8"></head>
     <body style="font-family: Inter, sans-serif; color: #111; max-width: 600px; margin: 0 auto; padding: 32px;">
-      <h1 style="font-size: 28px; margin-bottom: 8px;">Bedankt, ${booking.name}! 🫧</h1>
-      <p style="color: #666; margin-bottom: 32px;">Je boeking bij HeyNoona is bevestigd. We kijken ernaar uit!</p>
+      <h1 style="font-size: 28px; margin-bottom: 8px;">${copy.title}</h1>
+      <p style="color: #666; margin-bottom: 32px;">${copy.intro}</p>
 
       <div style="background: #FFF8F7; border-radius: 16px; padding: 24px; margin-bottom: 24px;">
         <p style="margin: 0 0 8px; font-size: 14px; color: #888; text-transform: uppercase; letter-spacing: 0.1em;">Jouw boeking</p>
@@ -89,6 +120,12 @@ function buildCustomerEmailHtml(booking: Booking): string {
   `;
 }
 
+function getEmailConfig() {
+  const adminEmail = process.env.ADMIN_EMAIL ?? process.env.SMTP_USER;
+  const fromEmail = process.env.SMTP_FROM ?? process.env.SMTP_USER;
+  return { adminEmail, fromEmail };
+}
+
 export async function sendBookingEmails(booking: Booking): Promise<void> {
   const transporter = getTransporter();
   if (!transporter) {
@@ -98,16 +135,16 @@ export async function sendBookingEmails(booking: Booking): Promise<void> {
     return;
   }
 
-  const adminEmail = process.env.ADMIN_EMAIL ?? process.env.SMTP_USER;
-  const fromEmail = process.env.SMTP_FROM ?? process.env.SMTP_USER;
+  const { adminEmail, fromEmail } = getEmailConfig();
   const pkg = getPackageById(booking.package as PackageId);
+  const fullName = `${booking.firstName} ${booking.lastName}`;
 
   if (!adminEmail || !fromEmail) return;
 
   await transporter.sendMail({
     from: `"HeyNoona Bookings" <${fromEmail}>`,
     to: adminEmail,
-    subject: `Nieuwe boeking: ${booking.name} — ${formatDateNL(booking.date)}`,
+    subject: `Nieuwe boeking: ${fullName} — ${formatDateNL(booking.date)}`,
     html: buildAdminEmailHtml(booking),
   });
 
@@ -115,6 +152,51 @@ export async function sendBookingEmails(booking: Booking): Promise<void> {
     from: `"HeyNoona" <${fromEmail}>`,
     to: booking.email,
     subject: `Boeking bevestigd — HeyNoona ${pkg?.name ?? ""} pakket`,
-    html: buildCustomerEmailHtml(booking),
+    html: buildCustomerEmailHtml(booking, "confirmation"),
+  });
+}
+
+// Onderstaande functies worden gebruikt vanuit het beheerdersdashboard.
+
+export async function resendConfirmationEmail(booking: Booking): Promise<void> {
+  const transporter = getTransporter();
+  if (!transporter) throw new Error("SMTP niet geconfigureerd.");
+  const { fromEmail } = getEmailConfig();
+  if (!fromEmail) throw new Error("SMTP_FROM/SMTP_USER ontbreekt.");
+  const pkg = getPackageById(booking.package as PackageId);
+
+  await transporter.sendMail({
+    from: `"HeyNoona" <${fromEmail}>`,
+    to: booking.email,
+    subject: `Boeking bevestigd — HeyNoona ${pkg?.name ?? ""} pakket`,
+    html: buildCustomerEmailHtml(booking, "confirmation"),
+  });
+}
+
+export async function sendCancellationEmail(booking: Booking): Promise<void> {
+  const transporter = getTransporter();
+  if (!transporter) throw new Error("SMTP niet geconfigureerd.");
+  const { fromEmail } = getEmailConfig();
+  if (!fromEmail) throw new Error("SMTP_FROM/SMTP_USER ontbreekt.");
+
+  await transporter.sendMail({
+    from: `"HeyNoona" <${fromEmail}>`,
+    to: booking.email,
+    subject: `Boeking geannuleerd — HeyNoona`,
+    html: buildCustomerEmailHtml(booking, "cancellation"),
+  });
+}
+
+export async function sendReminderEmail(booking: Booking): Promise<void> {
+  const transporter = getTransporter();
+  if (!transporter) throw new Error("SMTP niet geconfigureerd.");
+  const { fromEmail } = getEmailConfig();
+  if (!fromEmail) throw new Error("SMTP_FROM/SMTP_USER ontbreekt.");
+
+  await transporter.sendMail({
+    from: `"HeyNoona" <${fromEmail}>`,
+    to: booking.email,
+    subject: `Herinnering: jouw HeyNoona boeking op ${formatDateNL(booking.date)}`,
+    html: buildCustomerEmailHtml(booking, "reminder"),
   });
 }
