@@ -11,6 +11,7 @@ interface Bubble {
   delay: number;
   duration: number;
   opacity: number;
+  rotate: number;
 }
 
 function generateBubbles(count: number): Bubble[] {
@@ -21,7 +22,8 @@ function generateBubbles(count: number): Bubble[] {
     y: Math.random() * 100,
     delay: Math.random() * 5,
     duration: Math.random() * 8 + 10,
-    opacity: Math.random() * 0.4 + 0.75,
+    opacity: Math.random() * 0.35 + 0.35, // was 0.75-1.15, nu 0.35-0.7
+    rotate: Math.random() * 360,
   }));
 }
 
@@ -57,8 +59,8 @@ export default function BubbleBackground({
 
   const opacityMap = {
     light: 0.6,
-    medium: 1,
-    heavy: 1.2,
+    medium: 0.85,
+    heavy: 1,
   };
 
   return (
@@ -80,6 +82,8 @@ export default function BubbleBackground({
               left: `${bubble.x}%`,
               top: `${bubble.y}%`,
               opacity: bubble.opacity * opacityMap[intensity],
+              // @ts-expect-error custom property
+              "--bubble-rotate": `${bubble.rotate}deg`,
             }}
             animate={{
               y: [0, -30, 10, -20, 0],
