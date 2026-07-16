@@ -4,6 +4,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 const navLinks = [
   { label: "Pakketten", href: "#pakketten" },
@@ -38,11 +39,14 @@ export default function Navbar() {
         transition={{ duration: 0.6, delay: 0.2 }}
       >
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 md:px-10">
-          <Link
-  href="/"
-  className="font-heading text-2xl font-bold tracking-tight text-foreground md:text-3xl"
->
-  HeyNoona
+          <Link href="/" className="flex items-center">
+  <Image
+    src="/heynoona logo.svg"
+    alt="HeyNoona"
+    width={180}
+    height={50}
+    priority
+  />
 </Link>
 
           {/* Desktop nav */}
