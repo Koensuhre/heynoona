@@ -45,6 +45,7 @@ export default function Navbar() {
     alt="HeyNoona"
     width={180}
     height={50}
+    className="h-6 w-auto"
     priority
   />
 </Link>
