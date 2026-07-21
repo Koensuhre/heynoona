@@ -2,17 +2,20 @@
 
 import { motion } from "framer-motion";
 import { fadeInUp, staggerContainer } from "@/lib/animations";
+import Image from "next/image";
 
 const galleryItems = [
   { height: "h-72", gradient: "from-pink/40 via-pink/20 to-background-pink", label: "Bruiloft vibes" },
-  { height: "h-96", gradient: "from-blue/40 via-blue/20 to-background", label: "Party mode" },
-  { height: "h-64", gradient: "from-green/40 via-green/20 to-background", label: "Birthday glow" },
-  { height: "h-80", gradient: "from-pink/30 via-blue/20 to-green/15", label: "Event magic" },
-  { height: "h-56", gradient: "from-blue/35 via-pink/15 to-background-pink", label: "Golden hour" },
-  { height: "h-[22rem]", gradient: "from-green/30 via-blue/25 to-pink/10", label: "Night out" },
-  { height: "h-72", gradient: "from-pink/35 via-green/15 to-background", label: "Smile club" },
-  { height: "h-64", gradient: "from-blue/30 via-green/20 to-background-pink", label: "Flash moment" },
-  { height: "h-96", gradient: "from-green/35 via-pink/20 to-blue/10", label: "Forever frame" },
+    {height: "h-72",    image: "/gallery/1.jpg",    label: "Vibes",},
+  { height: "h-96", image: "/gallery/2.jpg", label: "Party mode" },
+  { height: "h-64", image: "/gallery/3.jpg", label: "Birthday glow" },
+  { height: "h-80", image: "/gallery/4.jpg", label: "Event magic" },
+  { height: "h-56", image: "/gallery/5.jpg", label: "Golden hour" },
+  { height: "h-[22rem]", image: "/gallery/6.jpg", label: "Night out" },
+  { height: "h-72", image: "/gallery/7.jpg", label: "Smile club" },
+  { height: "h-64", image: "/gallery/8.jpg", label: "Flash moment" },
+  { height: "h-96", image: "/gallery/9.jpg", label: "Forever frame" },
+  { height: "h-96", image: "/gallery/10.jpg", label: "Be here frame" },
 ];
 
 export default function Gallery() {
