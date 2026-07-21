@@ -15,7 +15,6 @@ const galleryItems: GalleryItem[] = [
   { height: "h-72", image: "/gallery/2.JPG", label: "Vibes" },
   { height: "h-96", image: "/gallery/3.JPG", label: "Party mode" },
   { height: "h-64", image: "/gallery/4.JPG", label: "Birthday glow" },
-  { height: "h-80", image: "/gallery/5.JPG", label: "Event magic" },
   { height: "h-56", image: "/gallery/6.JPG", label: "Golden hour" },
   { height: "h-[22rem]", image: "/gallery/7.JPG", label: "Night out" },
   { height: "h-72", image: "/gallery/8.JPG", label: "Smile club" },
