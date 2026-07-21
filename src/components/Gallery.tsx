@@ -6,7 +6,7 @@ import Image from "next/image";
 
 const galleryItems = [
   { height: "h-72", gradient: "from-pink/40 via-pink/20 to-background-pink", label: "Bruiloft vibes" },
-    {height: "h-72",    image: "/gallery/1.jpg",    label: "Vibes",},
+    {height: "h-72",image: "/gallery/1.jpg",    label: "Vibes",},
   { height: "h-96", image: "/gallery/2.jpg", label: "Party mode" },
   { height: "h-64", image: "/gallery/3.jpg", label: "Birthday glow" },
   { height: "h-80", image: "/gallery/4.jpg", label: "Event magic" },
@@ -55,9 +55,14 @@ export default function Gallery() {
               variants={fadeInUp}
               className="masonry-item group relative overflow-hidden rounded-2xl"
             >
-              <div
-                className={`${item.height} w-full bg-gradient-to-br ${item.gradient} transition-transform duration-700 ease-out group-hover:scale-105`}
-              />
+              <div className={`relative ${item.height} w-full overflow-hidden`}>
+  <Image
+    src={item.image}
+    alt={item.label}
+    fill
+    className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+  />
+</div>
               {/* Glass overlay on hover */}
               <div className="absolute inset-0 flex items-end bg-gradient-to-t from-foreground/30 via-transparent to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100">
                 <div className="glass-dark m-4 rounded-xl px-4 py-2">
