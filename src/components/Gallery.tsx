@@ -11,15 +11,15 @@ type GalleryItem = {
 };
 
 const galleryItems: GalleryItem[] = [
-  { height: "h-72", image: "/gallery/1.JPG", label: "Bruiloft vibes" },
-  { height: "h-72", image: "/gallery/2.JPG", label: "Vibes" },
+  { height: "h-72", image: "/gallery/1.JPG", label: "Forever frame" },
+  { height: "h-72", image: "/gallery/2.JPG", label: "Babyshower" },
   { height: "h-96", image: "/gallery/3.JPG", label: "Party mode" },
-  { height: "h-64", image: "/gallery/4.JPG", label: "Birthday glow" },
+  { height: "h-64", image: "/gallery/4.JPG", label: "Glow" },
   { height: "h-56", image: "/gallery/6.JPG", label: "Golden hour" },
   { height: "h-[22rem]", image: "/gallery/7.JPG", label: "Night out" },
   { height: "h-72", image: "/gallery/8.JPG", label: "Smile club" },
   { height: "h-64", image: "/gallery/9.JPG", label: "Flash moment" },
-  { height: "h-96", image: "/gallery/10.JPG", label: "Forever frame" },
+  { height: "h-96", image: "/gallery/10.JPG", label: "You're on camera!" },
 ];
 
 export default function Gallery() {
