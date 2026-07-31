@@ -17,12 +17,19 @@ interface Bubble {
 function generateBubbles(count: number): Bubble[] {
   return Array.from({ length: count }, (_, i) => ({
     id: i,
-    size: Math.random() * 160 + 50,
+
+    // GROTERE BUBBLES
+    size: Math.random() * 220 + 100,
+
     x: Math.random() * 100,
     y: Math.random() * 100,
+
     delay: Math.random() * 5,
     duration: Math.random() * 8 + 10,
-    opacity: Math.random() * 0.35 + 0.35, // was 0.75-1.15, nu 0.35-0.7
+
+    // VEEL ZICHTBAARDER
+    opacity: Math.random() * 0.35 + 0.55,
+
     rotate: Math.random() * 360,
   }));
 }
@@ -34,32 +41,38 @@ interface BubbleBackgroundProps {
 }
 
 export default function BubbleBackground({
-  count = 18,
+  count = 24,
   className = "",
   intensity = "heavy",
 }: BubbleBackgroundProps) {
   const bubbles = useMemo(() => generateBubbles(count), [count]);
+
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
 
-  const parallaxX = useTransform(mouseX, [-500, 500], [-15, 15]);
-  const parallaxY = useTransform(mouseY, [-500, 500], [-15, 15]);
+  // IETS STERKERE PARALLAX
+  const parallaxX = useTransform(mouseX, [-500, 500], [-25, 25]);
+  const parallaxY = useTransform(mouseY, [-500, 500], [-25, 25]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       const centerX = window.innerWidth / 2;
       const centerY = window.innerHeight / 2;
+
       mouseX.set(e.clientX - centerX);
       mouseY.set(e.clientY - centerY);
     };
 
     window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+    };
   }, [mouseX, mouseY]);
 
   const opacityMap = {
-    light: 0.6,
-    medium: 0.85,
+    light: 0.7,
+    medium: 0.9,
     heavy: 1,
   };
 
@@ -70,7 +83,10 @@ export default function BubbleBackground({
     >
       <motion.div
         className="absolute inset-0"
-        style={{ x: parallaxX, y: parallaxY }}
+        style={{
+          x: parallaxX,
+          y: parallaxY,
+        }}
       >
         {bubbles.map((bubble) => (
           <motion.div
@@ -82,13 +98,15 @@ export default function BubbleBackground({
               left: `${bubble.x}%`,
               top: `${bubble.y}%`,
               opacity: bubble.opacity * opacityMap[intensity],
+
               // @ts-expect-error custom property
               "--bubble-rotate": `${bubble.rotate}deg`,
             }}
             animate={{
-              y: [0, -30, 10, -20, 0],
-              x: [0, 10, -5, 8, 0],
-              scale: [1, 1.05, 0.98, 1.02, 1],
+              // IETS MEER BEWEGING
+              y: [0, -45, 15, -30, 0],
+              x: [0, 15, -8, 12, 0],
+              scale: [1, 1.08, 0.96, 1.04, 1],
             }}
             transition={{
               duration: bubble.duration,
