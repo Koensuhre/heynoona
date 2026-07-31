@@ -24,7 +24,7 @@ type Bubble = {  x: number;
 };
 
 export default function SoapBubbles({
-  count = 110,
+  count = 80,
   intensity = "medium",
 }: SoapBubblesProps) {  const canvasRef = useRef<HTMLCanvasElement>(null);
 
