@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import BubbleBackground from "./BubbleBackground";
+import SoapBubbles from "./SoapBubbles";
 import FloatingGradient from "./FloatingGradient";
 import Button from "./ui/Button";
 import { fadeInUp } from "@/lib/animations";
@@ -12,7 +12,7 @@ export default function Hero() {
       {/* Background */}
 <div className="absolute inset-0 bg-gradient-to-br from-[#FFD1D3] via-[#FFE5E6] to-background" />      <FloatingGradient color="blue" position="top-1/3 -right-48" size="md" />
       <FloatingGradient color="green" position="-bottom-32 left-1/4" size="md" />
-      <BubbleBackground count={22} intensity="heavy" />
+      <SoapBubbles count={202} intensity="heavy" />
 
       {/* Content */}
       <div className="relative z-10 mx-auto max-w-5xl px-6 py-32 text-center">

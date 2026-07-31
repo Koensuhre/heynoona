@@ -12,26 +12,56 @@ interface Bubble {
   duration: number;
   opacity: number;
   rotate: number;
+  blur: number;
 }
 
 function generateBubbles(count: number): Bubble[] {
-  return Array.from({ length: count }, (_, i) => ({
-    id: i,
+  return Array.from({ length: count }, (_, i) => {
+    // Meer kleine bubbles, minder enorme bubbles
+    const sizeRoll = Math.random();
 
-    // GROTERE BUBBLES
-    size: Math.random() * 220 + 100,
+    let size: number;
 
-    x: Math.random() * 100,
-    y: Math.random() * 100,
+    if (sizeRoll < 0.45) {
+      // Kleine bubbles: 35–90px
+      size = Math.random() * 55 + 35;
+    } else if (sizeRoll < 0.78) {
+      // Middelgrote bubbles: 90–170px
+      size = Math.random() * 80 + 90;
+    } else if (sizeRoll < 0.95) {
+      // Grote bubbles: 170–280px
+      size = Math.random() * 110 + 170;
+    } else {
+      // Enkele enorme bubbles: 280–430px
+      size = Math.random() * 150 + 280;
+    }
 
-    delay: Math.random() * 5,
-    duration: Math.random() * 8 + 10,
+    return {
+      id: i,
 
-    // VEEL ZICHTBAARDER
-    opacity: Math.random() * 0.35 + 0.55,
+      size,
 
-    rotate: Math.random() * 360,
-  }));
+      // Iets meer spreiding, maar niet te veel buiten beeld
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+
+      delay: Math.random() * 8,
+
+      // Verschillende snelheden voor natuurlijker beweging
+      duration: Math.random() * 12 + 12,
+
+      // Kleine bubbles zijn iets subtieler
+      opacity:
+        size < 90
+          ? Math.random() * 0.25 + 0.45
+          : Math.random() * 0.3 + 0.5,
+
+      rotate: Math.random() * 360,
+
+      // Sommige bubbles zijn iets zachter op de achtergrond
+      blur: size < 170 ? Math.random() * 0.8 : 0,
+    };
+  });
 }
 
 interface BubbleBackgroundProps {
@@ -41,7 +71,7 @@ interface BubbleBackgroundProps {
 }
 
 export default function BubbleBackground({
-  count = 24,
+  count = 1,
   className = "",
   intensity = "heavy",
 }: BubbleBackgroundProps) {
@@ -50,9 +80,8 @@ export default function BubbleBackground({
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
 
-  // IETS STERKERE PARALLAX
-  const parallaxX = useTransform(mouseX, [-500, 500], [-25, 25]);
-  const parallaxY = useTransform(mouseY, [-500, 500], [-25, 25]);
+  const parallaxX = useTransform(mouseX, [-500, 500], [-20, 20]);
+  const parallaxY = useTransform(mouseY, [-500, 500], [-20, 20]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -71,9 +100,9 @@ export default function BubbleBackground({
   }, [mouseX, mouseY]);
 
   const opacityMap = {
-    light: 0.7,
-    medium: 0.9,
-    heavy: 1,
+    light: 0.65,
+    medium: 0.85,
+    heavy: 8,
   };
 
   return (
@@ -98,15 +127,24 @@ export default function BubbleBackground({
               left: `${bubble.x}%`,
               top: `${bubble.y}%`,
               opacity: bubble.opacity * opacityMap[intensity],
+              filter: bubble.blur
+                ? `blur(${bubble.blur}px)`
+                : undefined,
 
               // @ts-expect-error custom property
               "--bubble-rotate": `${bubble.rotate}deg`,
             }}
             animate={{
-              // IETS MEER BEWEGING
-              y: [0, -45, 15, -30, 0],
-              x: [0, 15, -8, 12, 0],
-              scale: [1, 1.08, 0.96, 1.04, 1],
+              y: [0, -35, 15, -25, 0],
+              x: [0, 12, -8, 10, 0],
+              scale: [1, 1.025, 0.985, 1.015, 1],
+              rotate: [
+                0,
+                bubble.rotate * 0.015,
+                bubble.rotate * -0.01,
+                bubble.rotate * 0.01,
+                0,
+              ],
             }}
             transition={{
               duration: bubble.duration,
