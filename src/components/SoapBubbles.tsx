@@ -2,8 +2,12 @@
 
 import { useEffect, useRef } from "react";
 
-type Bubble = {
-  x: number;
+type SoapBubblesProps = {
+  count?: number;
+  intensity?: "light" | "medium" | "heavy";
+};
+
+type Bubble = {  x: number;
   y: number;
   radius: number;
 
@@ -19,8 +23,10 @@ type Bubble = {
   hue: number;
 };
 
-export default function SoapBubbles() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+export default function SoapBubbles({
+  count = 110,
+  intensity = "medium",
+}: SoapBubblesProps) {  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
