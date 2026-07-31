@@ -120,22 +120,31 @@ export default function SoapBubbles({
     };
 
     /* ========================================
-       AANTAL BUBBLES
-       ======================================== */
+   AANTAL BUBBLES
+   ======================================== */
 
-    const createBubbles = () => {
-      /*
-       * Minder dan de vorige versie,
-       * maar nog steeds een rijk gevulde achtergrond.
-       */
-      const amount = window.innerWidth < 768 ? 75 : 125;
+const createBubbles = () => {
+  /*
+   * Rustigere hoeveelheid bubbles.
+   *
+   * Mobiel: 35
+   * Desktop: 65
+   *
+   * We gebruiken Math.min zodat een hoge
+   * count vanuit de component niet alsnog
+   * voor honderden bubbles zorgt.
+   */
+  const amount =
+    window.innerWidth < 768
+      ? Math.min(count, 35)
+      : Math.min(count, 65);
 
-      bubbles = [];
+  bubbles = [];
 
-      for (let i = 0; i < amount; i++) {
-        bubbles.push(createBubble());
-      }
-    };
+  for (let i = 0; i < amount; i++) {
+    bubbles.push(createBubble());
+  }
+};
 
     /* ========================================
        MOUSE INTERACTION
