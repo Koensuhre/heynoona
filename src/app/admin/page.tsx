@@ -1,11 +1,45 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type Tab = "dashboard" | "agenda" | "bookings" | "availability";
 
+type DashboardStats = {
+  total: number;
+  thisMonth: number;
+  upcoming: number;
+  popularPackage: string | null;
+  popularEventType: string | null;
+};
+
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
+
+  const [stats, setStats] = useState<DashboardStats>({
+    total: 0,
+    thisMonth: 0,
+    upcoming: 0,
+    popularPackage: null,
+    popularEventType: null,
+  });
+
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/admin/stats")
+      .then((response) => response.json())
+      .then((data) => {
+        if (!data.error) {
+          setStats(data);
+        }
+      })
+      .catch((error) => {
+        console.error("Dashboard stats ophalen mislukt:", error);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
 
   const tabs: { id: Tab; label: string; icon: string }[] = [
     { id: "dashboard", label: "Dashboard", icon: "⌂" },
@@ -24,6 +58,7 @@ export default function AdminPage() {
               <p className="text-xs font-medium uppercase tracking-[0.2em] text-black/40">
                 HeyNoona
               </p>
+
               <h1 className="mt-1 text-2xl font-semibold tracking-tight">
                 Beheer
               </h1>
@@ -50,9 +85,14 @@ export default function AdminPage() {
 
         {/* Content */}
         <section className="flex-1 p-5 md:p-10">
-          {activeTab === "dashboard" && <Dashboard />}
+          {activeTab === "dashboard" && (
+            <Dashboard stats={stats} loading={loading} />
+          )}
+
           {activeTab === "agenda" && <Placeholder title="Agenda" />}
+
           {activeTab === "bookings" && <Placeholder title="Boekingen" />}
+
           {activeTab === "availability" && (
             <Placeholder title="Beschikbaarheid" />
           )}
@@ -62,32 +102,73 @@ export default function AdminPage() {
   );
 }
 
-function Dashboard() {
+function Dashboard({
+  stats,
+  loading,
+}: {
+  stats: DashboardStats;
+  loading: boolean;
+}) {
   return (
     <>
       <div className="mb-8">
         <p className="text-sm text-black/40">HeyNoona beheer</p>
+
         <h2 className="mt-1 text-3xl font-semibold tracking-tight">
           Dashboard
         </h2>
+
         <p className="mt-2 text-black/50">
           Beheer hier je boekingen en beschikbaarheid.
         </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Boekingen" value="—" />
-        <StatCard label="Deze maand" value="—" />
-        <StatCard label="Aankomend" value="—" />
-        <StatCard label="Nieuwe aanvragen" value="—" />
+        <StatCard
+          label="Boekingen"
+          value={loading ? "…" : String(stats.total)}
+        />
+
+        <StatCard
+          label="Deze maand"
+          value={loading ? "…" : String(stats.thisMonth)}
+        />
+
+        <StatCard
+          label="Aankomend"
+          value={loading ? "…" : String(stats.upcoming)}
+        />
+
+        <StatCard
+          label="Populair pakket"
+          value={loading ? "…" : stats.popularPackage ?? "—"}
+        />
       </div>
 
       <div className="mt-8 rounded-2xl border border-black/10 bg-white p-6">
-        <h3 className="text-lg font-semibold">Welkom bij het beheer</h3>
-        <p className="mt-2 text-sm leading-6 text-black/50">
-          De basis van het HeyNoona dashboard staat klaar. In de volgende
-          stap koppelen we de agenda en boekingen aan de Neon database.
-        </p>
+        <h3 className="text-lg font-semibold">Overzicht</h3>
+
+        <div className="mt-5 space-y-4 text-sm">
+          <div className="flex items-center justify-between border-b border-black/5 pb-4">
+            <span className="text-black/50">
+              Populair evenement
+            </span>
+
+            <span className="font-medium">
+              {stats.popularEventType ?? "—"}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <span className="text-black/50">
+              Aankomende boekingen
+            </span>
+
+            <span className="font-medium">
+              {stats.upcoming}
+            </span>
+          </div>
+        </div>
       </div>
     </>
   );
@@ -103,7 +184,10 @@ function StatCard({
   return (
     <div className="rounded-2xl border border-black/10 bg-white p-5">
       <p className="text-sm text-black/40">{label}</p>
-      <p className="mt-2 text-3xl font-semibold">{value}</p>
+
+      <p className="mt-2 text-3xl font-semibold">
+        {value}
+      </p>
     </div>
   );
 }
@@ -111,8 +195,13 @@ function StatCard({
 function Placeholder({ title }: { title: string }) {
   return (
     <div>
-      <p className="text-sm text-black/40">HeyNoona beheer</p>
-      <h2 className="mt-1 text-3xl font-semibold tracking-tight">{title}</h2>
+      <p className="text-sm text-black/40">
+        HeyNoona beheer
+      </p>
+
+      <h2 className="mt-1 text-3xl font-semibold tracking-tight">
+        {title}
+      </h2>
 
       <div className="mt-8 rounded-2xl border border-dashed border-black/20 bg-white p-10 text-center">
         <p className="text-black/40">
