@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 type Tab = "dashboard" | "agenda" | "bookings" | "availability";
@@ -78,6 +78,14 @@ const TIME_SLOTS = [
 ];
 
 export default function AdminPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminContent />
+    </Suspense>
+  );
+}
+
+function AdminContent() {
   const searchParams = useSearchParams();
   const bookingId = searchParams.get("booking");
 
@@ -116,20 +124,20 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => {
-  if (activeTab !== "bookings") return;
-  loadBookings();
-}, [activeTab]);
+    if (activeTab !== "bookings") return;
+    loadBookings();
+  }, [activeTab]);
 
-useEffect(() => {
-  if (!bookingId || bookings.length === 0) return;
+  useEffect(() => {
+    if (!bookingId || bookings.length === 0) return;
 
-  const booking = bookings.find((item) => item.id === bookingId);
+    const booking = bookings.find((item) => item.id === bookingId);
 
-  if (booking) {
-    setSelectedBooking(booking);
-    setActiveTab("bookings");
-  }
-}, [bookingId, bookings]);
+    if (booking) {
+      setSelectedBooking(booking);
+      setActiveTab("bookings");
+    }
+  }, [bookingId, bookings]);
 
   async function loadBookings() {
     setBookingsLoading(true);
@@ -756,7 +764,10 @@ function Availability() {
 
           <div className="mt-4">
             <label className="text-sm font-medium">
-              Reden <span className="font-normal text-black/40">(optioneel)</span>
+              Reden{" "}
+              <span className="font-normal text-black/40">
+                (optioneel)
+              </span>
             </label>
 
             <input
@@ -820,7 +831,10 @@ function Availability() {
 
           <div className="mt-4">
             <label className="text-sm font-medium">
-              Reden <span className="font-normal text-black/40">(optioneel)</span>
+              Reden{" "}
+              <span className="font-normal text-black/40">
+                (optioneel)
+              </span>
             </label>
 
             <input
@@ -1040,7 +1054,9 @@ function Agenda() {
   function goToToday() {
     const today = new Date();
 
-    setCurrentDate(new Date(today.getFullYear(), today.getMonth(), 1));
+    setCurrentDate(
+      new Date(today.getFullYear(), today.getMonth(), 1)
+    );
 
     setSelectedDate(formatDateForApi(today));
   }
@@ -1147,7 +1163,9 @@ function Agenda() {
             const dayBlockedSlots = getBlockedSlotsForDate(date);
             const blocked = isDateBlocked(date);
 
-            const today = formatDateForApi(new Date()) === date;
+            const today =
+              formatDateForApi(new Date()) === date;
+
             const selected = selectedDate === date;
 
             return (
@@ -1243,7 +1261,9 @@ function AgendaDay({
   onRefresh: () => void;
 }) {
   const selected = new Date(`${date}T00:00:00`);
-  const [blockingSlot, setBlockingSlot] = useState<string | null>(null);
+  const [blockingSlot, setBlockingSlot] = useState<string | null>(
+    null
+  );
 
   const title = selected.toLocaleDateString("nl-NL", {
     weekday: "long",
@@ -1290,12 +1310,17 @@ function AgendaDay({
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error ?? "Blokkeren mislukt.");
+        throw new Error(
+          data.error ?? "Blokkeren mislukt."
+        );
       }
 
       await onRefresh();
     } catch (error) {
-      console.error("Tijdslot blokkeren mislukt:", error);
+      console.error(
+        "Tijdslot blokkeren mislukt:",
+        error
+      );
       alert("Tijdslot blokkeren mislukt.");
     } finally {
       setBlockingSlot(null);
@@ -1305,7 +1330,9 @@ function AgendaDay({
   return (
     <div className="mt-5 rounded-2xl border border-black/10 bg-white p-6">
       <div className="mb-5">
-        <p className="text-sm text-black/40">Geselecteerde dag</p>
+        <p className="text-sm text-black/40">
+          Geselecteerde dag
+        </p>
 
         <h3 className="mt-1 text-xl font-semibold capitalize">
           {title}
@@ -1358,26 +1385,26 @@ function AgendaDay({
                 )}
               </div>
 
-            {booking ? (
-  <button
-    onClick={() => {
-      window.location.href = `/admin?booking=${booking.id}`;
-    }}
-    className="rounded-lg bg-white/10 px-3 py-2 text-sm hover:bg-white/20"
-  >
-    Bekijk boeking
-  </button>
-) : !blocked && !blockedDate ? (
-  <button
-    onClick={() => blockSlot(slot.start)}
-    disabled={blockingSlot === slot.start}
-    className="rounded-lg border border-black/10 bg-white px-3 py-2 text-sm font-medium hover:bg-black/5 disabled:opacity-50"
-  >
-    {blockingSlot === slot.start
-      ? "Blokkeren..."
-      : "Blokkeer tijdslot"}
-  </button>
-) : null}
+              {booking ? (
+                <button
+                  onClick={() => {
+                    window.location.href = `/admin?booking=${booking.id}`;
+                  }}
+                  className="rounded-lg bg-white/10 px-3 py-2 text-sm hover:bg-white/20"
+                >
+                  Bekijk boeking
+                </button>
+              ) : !blocked && !blockedDate ? (
+                <button
+                  onClick={() => blockSlot(slot.start)}
+                  disabled={blockingSlot === slot.start}
+                  className="rounded-lg border border-black/10 bg-white px-3 py-2 text-sm font-medium hover:bg-black/5 disabled:opacity-50"
+                >
+                  {blockingSlot === slot.start
+                    ? "Blokkeren..."
+                    : "Blokkeer tijdslot"}
+                </button>
+              ) : null}
             </div>
           );
         })}
@@ -1404,7 +1431,9 @@ function DetailSection({
 }) {
   return (
     <div className="rounded-2xl border border-black/10 bg-white p-6">
-      <h3 className="mb-5 text-lg font-semibold">{title}</h3>
+      <h3 className="mb-5 text-lg font-semibold">
+        {title}
+      </h3>
 
       <div className="space-y-4">{children}</div>
     </div>
@@ -1422,7 +1451,9 @@ function DetailRow({
 }) {
   return (
     <div className="flex flex-col gap-1 border-b border-black/5 pb-3 last:border-0 last:pb-0 sm:flex-row sm:justify-between sm:gap-4">
-      <span className="text-sm text-black/40">{label}</span>
+      <span className="text-sm text-black/40">
+        {label}
+      </span>
 
       {href ? (
         <a
@@ -1451,7 +1482,9 @@ function StatCard({
     <div className="rounded-2xl border border-black/10 bg-white p-5">
       <p className="text-sm text-black/40">{label}</p>
 
-      <p className="mt-2 text-3xl font-semibold">{value}</p>
+      <p className="mt-2 text-3xl font-semibold">
+        {value}
+      </p>
     </div>
   );
 }
@@ -1459,7 +1492,9 @@ function StatCard({
 function Placeholder({ title }: { title: string }) {
   return (
     <div>
-      <p className="text-sm text-black/40">HeyNoona beheer</p>
+      <p className="text-sm text-black/40">
+        HeyNoona beheer
+      </p>
 
       <h2 className="mt-1 text-3xl font-semibold tracking-tight">
         {title}
@@ -1481,6 +1516,7 @@ function formatDateForApi(date: Date) {
 
   return `${year}-${month}-${day}`;
 }
+
 function formatDate(dateString: string) {
   const date = new Date(`${dateString}T00:00:00`);
 
