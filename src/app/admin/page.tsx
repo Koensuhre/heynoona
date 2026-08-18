@@ -217,7 +217,7 @@ export default function AdminPage() {
             <Dashboard stats={stats} loading={loading} />
           )}
 
-          {activeTab === "agenda" && <Placeholder title="Agenda" />}
+          {activeTab === "agenda" && <Agenda />}
 
           {activeTab === "bookings" && (
             <>
@@ -946,6 +946,389 @@ function Availability() {
   );
 }
 
+/* ---------------- AGENDA ---------------- */
+
+function Agenda() {
+  const [currentDate, setCurrentDate] = useState(() => new Date());
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [blockedDates, setBlockedDates] = useState<BlockedDate[]>([]);
+  const [blockedSlots, setBlockedSlots] = useState<BlockedSlot[]>([]);
+
+  const [loading, setLoading] = useState(true);
+
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+
+  const firstDay = new Date(year, month, 1);
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  // Maandag = 0, zondag = 6
+  const startingDay = (firstDay.getDay() + 6) % 7;
+
+  const days = Array.from(
+    { length: startingDay + daysInMonth },
+    (_, index) => {
+      if (index < startingDay) return null;
+      return index - startingDay + 1;
+    }
+  );
+
+  useEffect(() => {
+    loadAgenda();
+  }, [year, month]);
+
+  async function loadAgenda() {
+    setLoading(true);
+
+    const dateFrom = `${year}-${String(month + 1).padStart(2, "0")}-01`;
+
+    const lastDay = new Date(year, month + 1, 0).getDate();
+
+    const dateTo = `${year}-${String(month + 1).padStart(2, "0")}-${String(
+      lastDay
+    ).padStart(2, "0")}`;
+
+    try {
+      const response = await fetch(
+        `/api/admin/agenda?dateFrom=${dateFrom}&dateTo=${dateTo}`
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error);
+      }
+
+      setBookings(data.bookings ?? []);
+      setBlockedDates(data.blockedDates ?? []);
+      setBlockedSlots(data.blockedSlots ?? []);
+    } catch (error) {
+      console.error("Agenda ophalen mislukt:", error);
+      alert("Agenda kon niet worden opgehaald.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function previousMonth() {
+    setSelectedDate(null);
+    setCurrentDate(new Date(year, month - 1, 1));
+  }
+
+  function nextMonth() {
+    setSelectedDate(null);
+    setCurrentDate(new Date(year, month + 1, 1));
+  }
+
+  function goToToday() {
+    const today = new Date();
+
+    setCurrentDate(new Date(today.getFullYear(), today.getMonth(), 1));
+
+    setSelectedDate(formatDateForApi(today));
+  }
+
+  function getBookingsForDate(date: string) {
+    return bookings.filter((booking) => booking.date === date);
+  }
+
+  function getBlockedSlotsForDate(date: string) {
+    return blockedSlots.filter((slot) => slot.date === date);
+  }
+
+  function isDateBlocked(date: string) {
+    return blockedDates.some((blocked) => blocked.date === date);
+  }
+
+  function formatMonthTitle() {
+    return currentDate.toLocaleDateString("nl-NL", {
+      month: "long",
+      year: "numeric",
+    });
+  }
+
+  return (
+    <>
+      <div className="mb-8">
+        <p className="text-sm text-black/40">HeyNoona beheer</p>
+
+        <div className="mt-1 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="text-3xl font-semibold tracking-tight">
+              Agenda
+            </h2>
+
+            <p className="mt-2 text-black/50">
+              Bekijk boekingen en je geblokkeerde momenten.
+            </p>
+          </div>
+
+          <button
+            onClick={goToToday}
+            className="w-fit rounded-xl border border-black/10 bg-white px-4 py-2 text-sm font-medium hover:bg-black/5"
+          >
+            Vandaag
+          </button>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-black/10 bg-white p-4 md:p-6">
+        {/* Kalender header */}
+
+        <div className="mb-5 flex items-center justify-between">
+          <button
+            onClick={previousMonth}
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-black/10 hover:bg-black/5"
+          >
+            ←
+          </button>
+
+          <h3 className="text-lg font-semibold capitalize">
+            {formatMonthTitle()}
+          </h3>
+
+          <button
+            onClick={nextMonth}
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-black/10 hover:bg-black/5"
+          >
+            →
+          </button>
+        </div>
+
+        {/* Weekdagen */}
+
+        <div className="grid grid-cols-7 border-b border-black/10 pb-2">
+          {["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"].map((day) => (
+            <div
+              key={day}
+              className="text-center text-xs font-medium text-black/40"
+            >
+              {day}
+            </div>
+          ))}
+        </div>
+
+        {/* Kalender */}
+
+        <div className="mt-2 grid grid-cols-7 gap-1">
+          {days.map((day, index) => {
+            if (!day) {
+              return (
+                <div
+                  key={`empty-${index}`}
+                  className="min-h-20 rounded-xl"
+                />
+              );
+            }
+
+            const date = `${year}-${String(month + 1).padStart(
+              2,
+              "0"
+            )}-${String(day).padStart(2, "0")}`;
+
+            const dayBookings = getBookingsForDate(date);
+            const dayBlockedSlots = getBlockedSlotsForDate(date);
+            const blocked = isDateBlocked(date);
+
+            const today = formatDateForApi(new Date()) === date;
+            const selected = selectedDate === date;
+
+            return (
+              <button
+                key={date}
+                onClick={() => setSelectedDate(date)}
+                className={`min-h-20 rounded-xl border p-2 text-left transition md:min-h-24 ${
+                  selected
+                    ? "border-black bg-black/5"
+                    : "border-transparent hover:border-black/10 hover:bg-black/5"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span
+                    className={`flex h-7 w-7 items-center justify-center rounded-full text-sm ${
+                      today
+                        ? "bg-black font-semibold text-white"
+                        : "font-medium"
+                    }`}
+                  >
+                    {day}
+                  </span>
+
+                  {blocked && (
+                    <span className="text-xs text-red-500">
+                      ●
+                    </span>
+                  )}
+                </div>
+
+                <div className="mt-2 space-y-1">
+                  {dayBookings.slice(0, 2).map((booking) => (
+                    <div
+                      key={booking.id}
+                      className="truncate rounded-md bg-black px-1.5 py-1 text-[10px] font-medium text-white"
+                    >
+                      {booking.startTime} {booking.firstName}
+                    </div>
+                  ))}
+
+                  {dayBookings.length > 2 && (
+                    <p className="text-[10px] text-black/40">
+                      +{dayBookings.length - 2} meer
+                    </p>
+                  )}
+
+                  {dayBlockedSlots.length > 0 && !blocked && (
+                    <p className="truncate text-[10px] text-red-500">
+                      {dayBlockedSlots.length} geblokkeerd
+                    </p>
+                  )}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {loading && (
+          <p className="mt-5 text-center text-sm text-black/40">
+            Agenda laden...
+          </p>
+        )}
+      </div>
+
+      {/* Geselecteerde dag */}
+
+      {selectedDate && (
+        <AgendaDay
+          date={selectedDate}
+          bookings={getBookingsForDate(selectedDate)}
+          blockedDate={isDateBlocked(selectedDate)}
+          blockedSlots={getBlockedSlotsForDate(selectedDate)}
+          onRefresh={loadAgenda}
+        />
+      )}
+    </>
+  );
+}
+
+/* ---------------- AGENDA DAG ---------------- */
+
+function AgendaDay({
+  date,
+  bookings,
+  blockedDate,
+  blockedSlots,
+  onRefresh,
+}: {
+  date: string;
+  bookings: Booking[];
+  blockedDate: boolean;
+  blockedSlots: BlockedSlot[];
+  onRefresh: () => void;
+}) {
+  const selected = new Date(`${date}T00:00:00`);
+
+  const title = selected.toLocaleDateString("nl-NL", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  function getBookingForSlot(startTime: string) {
+    return bookings.find(
+      (booking) => booking.startTime === startTime
+    );
+  }
+
+  function isSlotBlocked(startTime: string) {
+    return blockedSlots.some(
+      (slot) => slot.startTime === startTime
+    );
+  }
+
+  return (
+    <div className="mt-5 rounded-2xl border border-black/10 bg-white p-6">
+      <div className="mb-5">
+        <p className="text-sm text-black/40">Geselecteerde dag</p>
+
+        <h3 className="mt-1 text-xl font-semibold capitalize">
+          {title}
+        </h3>
+
+        {blockedDate && (
+          <p className="mt-2 text-sm font-medium text-red-500">
+            Deze hele dag is geblokkeerd.
+          </p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        {TIME_SLOTS.map((slot) => {
+          const booking = getBookingForSlot(slot.start);
+          const blocked = isSlotBlocked(slot.start);
+
+          return (
+            <div
+              key={slot.start}
+              className={`flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between ${
+                booking
+                  ? "border-black/10 bg-black text-white"
+                  : blocked || blockedDate
+                  ? "border-red-100 bg-red-50"
+                  : "border-black/5 bg-[#faf9f7]"
+              }`}
+            >
+              <div>
+                <p
+                  className={`text-sm font-semibold ${
+                    booking ? "text-white" : ""
+                  }`}
+                >
+                  {slot.start} – {slot.end}
+                </p>
+
+                {booking ? (
+                  <p className="mt-1 text-sm text-white/70">
+                    {booking.firstName} {booking.lastName}
+                  </p>
+                ) : blocked || blockedDate ? (
+                  <p className="mt-1 text-sm text-red-500">
+                    Niet beschikbaar
+                  </p>
+                ) : (
+                  <p className="mt-1 text-sm text-black/40">
+                    Beschikbaar
+                  </p>
+                )}
+              </div>
+
+              {booking && (
+                <button
+                  onClick={() => {
+                    window.location.href = `/admin?booking=${booking.id}`;
+                  }}
+                  className="rounded-lg bg-white/10 px-3 py-2 text-sm hover:bg-white/20"
+                >
+                  Bekijk boeking
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <button
+        onClick={onRefresh}
+        className="mt-5 text-sm text-black/40 hover:text-black"
+      >
+        ↻ Agenda vernieuwen
+      </button>
+    </div>
+  );
+}
+
 /* ---------------- HULPCOMPONENTEN ---------------- */
 
 function DetailSection({
@@ -1027,6 +1410,13 @@ function Placeholder({ title }: { title: string }) {
   );
 }
 
+function formatDateForApi(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
 function formatDate(dateString: string) {
   const date = new Date(`${dateString}T00:00:00`);
 
