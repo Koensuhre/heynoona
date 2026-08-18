@@ -1243,6 +1243,7 @@ function AgendaDay({
   onRefresh: () => void;
 }) {
   const selected = new Date(`${date}T00:00:00`);
+  const [blockingSlot, setBlockingSlot] = useState<string | null>(null);
 
   const title = selected.toLocaleDateString("nl-NL", {
     weekday: "long",
@@ -1261,6 +1262,44 @@ function AgendaDay({
     return blockedSlots.some(
       (slot) => slot.startTime === startTime
     );
+  }
+
+  async function blockSlot(startTime: string) {
+    const reason = window.prompt(
+      "Waarom wil je dit tijdslot blokkeren? (optioneel)"
+    );
+
+    if (reason === null) return;
+
+    setBlockingSlot(startTime);
+
+    try {
+      const response = await fetch("/api/admin/availability", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          type: "slot",
+          date,
+          startTime,
+          reason,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error ?? "Blokkeren mislukt.");
+      }
+
+      await onRefresh();
+    } catch (error) {
+      console.error("Tijdslot blokkeren mislukt:", error);
+      alert("Tijdslot blokkeren mislukt.");
+    } finally {
+      setBlockingSlot(null);
+    }
   }
 
   return (
@@ -1319,16 +1358,26 @@ function AgendaDay({
                 )}
               </div>
 
-              {booking && (
-                <button
-                  onClick={() => {
-                    window.location.href = `/admin?booking=${booking.id}`;
-                  }}
-                  className="rounded-lg bg-white/10 px-3 py-2 text-sm hover:bg-white/20"
-                >
-                  Bekijk boeking
-                </button>
-              )}
+            {booking ? (
+  <button
+    onClick={() => {
+      window.location.href = `/admin?booking=${booking.id}`;
+    }}
+    className="rounded-lg bg-white/10 px-3 py-2 text-sm hover:bg-white/20"
+  >
+    Bekijk boeking
+  </button>
+) : !blocked && !blockedDate ? (
+  <button
+    onClick={() => blockSlot(slot.start)}
+    disabled={blockingSlot === slot.start}
+    className="rounded-lg border border-black/10 bg-white px-3 py-2 text-sm font-medium hover:bg-black/5 disabled:opacity-50"
+  >
+    {blockingSlot === slot.start
+      ? "Blokkeren..."
+      : "Blokkeer tijdslot"}
+  </button>
+) : null}
             </div>
           );
         })}
