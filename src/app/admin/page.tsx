@@ -12,6 +12,13 @@ type DashboardStats = {
   popularEventType: string | null;
 };
 
+type BookingStatus =
+  | "nieuw"
+  | "goedgekeurd"
+  | "in_behandeling"
+  | "afgerond"
+  | "geannuleerd";
+
 type Booking = {
   id: string;
   date: string;
@@ -29,17 +36,20 @@ type Booking = {
   city: string | null;
   message: string | null;
   termsAccepted: boolean;
-  status:
-    | "nieuw"
-    | "goedgekeurd"
-    | "in_behandeling"
-    | "afgerond"
-    | "geannuleerd";
+  status: BookingStatus;
   adminNotes: string | null;
   approvedBy: string | null;
   approvedAt: string | null;
   createdAt: string;
   updatedAt: string;
+};
+
+const statusLabels: Record<BookingStatus, string> = {
+  nieuw: "Nieuw",
+  goedgekeurd: "Goedgekeurd",
+  in_behandeling: "In behandeling",
+  afgerond: "Afgerond",
+  geannuleerd: "Geannuleerd",
 };
 
 export default function AdminPage() {
@@ -54,6 +64,10 @@ export default function AdminPage() {
   });
 
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(
+    null
+  );
+
   const [loading, setLoading] = useState(true);
   const [bookingsLoading, setBookingsLoading] = useState(false);
 
@@ -76,22 +90,60 @@ export default function AdminPage() {
   useEffect(() => {
     if (activeTab !== "bookings") return;
 
+    loadBookings();
+  }, [activeTab]);
+
+  async function loadBookings() {
     setBookingsLoading(true);
 
-    fetch("/api/admin/bookings")
-      .then((response) => response.json())
-      .then((data) => {
-        if (!data.error) {
-          setBookings(data.bookings ?? []);
-        }
-      })
-      .catch((error) => {
-        console.error("Boekingen ophalen mislukt:", error);
-      })
-      .finally(() => {
-        setBookingsLoading(false);
+    try {
+      const response = await fetch("/api/admin/bookings");
+      const data = await response.json();
+
+      if (!data.error) {
+        setBookings(data.bookings ?? []);
+      }
+    } catch (error) {
+      console.error("Boekingen ophalen mislukt:", error);
+    } finally {
+      setBookingsLoading(false);
+    }
+  }
+
+  async function saveBooking(
+    id: string,
+    changes: {
+      status?: BookingStatus;
+      adminNotes?: string;
+    }
+  ) {
+    try {
+      const response = await fetch(`/api/admin/bookings/${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(changes),
       });
-  }, [activeTab]);
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error ?? "Opslaan mislukt.");
+      }
+
+      setBookings((current) =>
+        current.map((booking) =>
+          booking.id === id ? data.booking : booking
+        )
+      );
+
+      setSelectedBooking(data.booking);
+    } catch (error) {
+      console.error("Boeking opslaan mislukt:", error);
+      alert("Opslaan mislukt. Probeer het opnieuw.");
+    }
+  }
 
   const tabs: { id: Tab; label: string; icon: string }[] = [
     { id: "dashboard", label: "Dashboard", icon: "⌂" },
@@ -119,7 +171,10 @@ export default function AdminPage() {
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => {
+                    setSelectedBooking(null);
+                    setActiveTab(tab.id);
+                  }}
                   className={`flex shrink-0 items-center gap-3 rounded-xl px-4 py-3 text-left text-sm transition ${
                     activeTab === tab.id
                       ? "bg-black text-white"
@@ -139,13 +194,26 @@ export default function AdminPage() {
             <Dashboard stats={stats} loading={loading} />
           )}
 
-          {activeTab === "agenda" && <Placeholder title="Agenda" />}
+          {activeTab === "agenda" && (
+            <Placeholder title="Agenda" />
+          )}
 
           {activeTab === "bookings" && (
-            <BookingsList
-              bookings={bookings}
-              loading={bookingsLoading}
-            />
+            <>
+              {selectedBooking ? (
+                <BookingDetail
+                  booking={selectedBooking}
+                  onBack={() => setSelectedBooking(null)}
+                  onSave={saveBooking}
+                />
+              ) : (
+                <BookingsList
+                  bookings={bookings}
+                  loading={bookingsLoading}
+                  onSelect={setSelectedBooking}
+                />
+              )}
+            </>
           )}
 
           {activeTab === "availability" && (
@@ -232,9 +300,11 @@ function Dashboard({
 function BookingsList({
   bookings,
   loading,
+  onSelect,
 }: {
   bookings: Booking[];
   loading: boolean;
+  onSelect: (booking: Booking) => void;
 }) {
   return (
     <>
@@ -265,10 +335,40 @@ function BookingsList({
       ) : (
         <div className="space-y-3">
           {bookings.map((booking) => (
-            <BookingCard
+            <button
               key={booking.id}
-              booking={booking}
-            />
+              onClick={() => onSelect(booking)}
+              className="block w-full rounded-2xl border border-black/10 bg-white p-5 text-left transition hover:border-black/20 hover:shadow-sm"
+            >
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="font-semibold">
+                      {booking.firstName} {booking.lastName}
+                    </h3>
+
+                    <span className="rounded-full bg-black/5 px-3 py-1 text-xs font-medium">
+                      {statusLabels[booking.status]}
+                    </span>
+                  </div>
+
+                  <p className="mt-1 text-sm text-black/50">
+                    {formatDate(booking.date)} · {booking.startTime} –{" "}
+                    {booking.endTime}
+                  </p>
+                </div>
+
+                <div className="text-left md:text-right">
+                  <p className="text-sm font-medium">
+                    {booking.package}
+                  </p>
+
+                  <p className="text-sm text-black/50">
+                    {booking.eventType}
+                  </p>
+                </div>
+              </div>
+            </button>
           ))}
         </div>
       )}
@@ -276,86 +376,243 @@ function BookingsList({
   );
 }
 
-function BookingCard({
+function BookingDetail({
   booking,
+  onBack,
+  onSave,
 }: {
   booking: Booking;
+  onBack: () => void;
+  onSave: (
+    id: string,
+    changes: {
+      status?: BookingStatus;
+      adminNotes?: string;
+    }
+  ) => void;
 }) {
-  const date = new Date(`${booking.date}T00:00:00`);
+  const [status, setStatus] = useState<BookingStatus>(
+    booking.status
+  );
 
-  const formattedDate = date.toLocaleDateString("nl-NL", {
-    weekday: "short",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  const [notes, setNotes] = useState(
+    booking.adminNotes ?? ""
+  );
 
-  const statusLabels: Record<Booking["status"], string> = {
-    nieuw: "Nieuw",
-    goedgekeurd: "Goedgekeurd",
-    in_behandeling: "In behandeling",
-    afgerond: "Afgerond",
-    geannuleerd: "Geannuleerd",
-  };
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setStatus(booking.status);
+    setNotes(booking.adminNotes ?? "");
+  }, [booking]);
+
+  async function handleSave() {
+    setSaving(true);
+
+    await onSave(booking.id, {
+      status,
+      adminNotes: notes,
+    });
+
+    setSaving(false);
+  }
 
   return (
-    <div className="rounded-2xl border border-black/10 bg-white p-5">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-semibold">
-              {booking.firstName} {booking.lastName}
-            </h3>
+    <>
+      <button
+        onClick={onBack}
+        className="mb-6 text-sm text-black/50 hover:text-black"
+      >
+        ← Terug naar boekingen
+      </button>
 
-            <span className="rounded-full bg-black/5 px-3 py-1 text-xs font-medium">
-              {statusLabels[booking.status]}
-            </span>
-          </div>
+      <div className="mb-8">
+        <p className="text-sm text-black/40">
+          Boeking
+        </p>
 
-          <p className="mt-1 text-sm text-black/50">
-            {formattedDate} · {booking.startTime} – {booking.endTime}
-          </p>
-        </div>
+        <h2 className="mt-1 text-3xl font-semibold tracking-tight">
+          {booking.firstName} {booking.lastName}
+        </h2>
 
-        <div className="text-left md:text-right">
-          <p className="text-sm font-medium">
-            {booking.package}
-          </p>
-
-          <p className="text-sm text-black/50">
-            {booking.eventType}
-          </p>
-        </div>
+        <p className="mt-2 text-black/50">
+          {formatDate(booking.date)} · {booking.startTime} –{" "}
+          {booking.endTime}
+        </p>
       </div>
 
-      <div className="mt-5 grid gap-3 border-t border-black/5 pt-5 text-sm md:grid-cols-3">
-        <div>
-          <p className="text-xs text-black/40">E-mail</p>
-          <a
+      <div className="grid gap-5 lg:grid-cols-2">
+        <DetailSection title="Evenement">
+          <DetailRow
+            label="Datum"
+            value={formatDate(booking.date)}
+          />
+
+          <DetailRow
+            label="Tijd"
+            value={`${booking.startTime} – ${booking.endTime}`}
+          />
+
+          <DetailRow
+            label="Pakket"
+            value={booking.package}
+          />
+
+          <DetailRow
+            label="Evenement"
+            value={booking.eventType}
+          />
+        </DetailSection>
+
+        <DetailSection title="Klant">
+          <DetailRow
+            label="Naam"
+            value={`${booking.firstName} ${booking.lastName}`}
+          />
+
+          {booking.company && (
+            <DetailRow
+              label="Bedrijf"
+              value={booking.company}
+            />
+          )}
+
+          <DetailRow
+            label="E-mail"
+            value={booking.email}
             href={`mailto:${booking.email}`}
-            className="mt-1 block break-all hover:underline"
-          >
-            {booking.email}
-          </a>
-        </div>
+          />
 
-        <div>
-          <p className="text-xs text-black/40">Telefoon</p>
-          <a
+          <DetailRow
+            label="Telefoon"
+            value={booking.phone}
             href={`tel:${booking.phone}`}
-            className="mt-1 block hover:underline"
+          />
+        </DetailSection>
+
+        <DetailSection title="Adres">
+          <p className="text-sm leading-6">
+            {booking.address || "Geen adres opgegeven"}
+            <br />
+            {booking.postalCode} {booking.city}
+          </p>
+        </DetailSection>
+
+        <DetailSection title="Opmerkingen klant">
+          <p className="whitespace-pre-wrap text-sm leading-6 text-black/70">
+            {booking.message || "Geen opmerkingen"}
+          </p>
+        </DetailSection>
+      </div>
+
+      <div className="mt-5 rounded-2xl border border-black/10 bg-white p-6">
+        <h3 className="text-lg font-semibold">
+          Beheer
+        </h3>
+
+        <div className="mt-5">
+          <label className="text-sm font-medium">
+            Status
+          </label>
+
+          <select
+            value={status}
+            onChange={(event) =>
+              setStatus(event.target.value as BookingStatus)
+            }
+            className="mt-2 w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm outline-none focus:border-black md:max-w-md"
           >
-            {booking.phone}
-          </a>
+            <option value="nieuw">Nieuw</option>
+            <option value="goedgekeurd">
+              Goedgekeurd
+            </option>
+            <option value="in_behandeling">
+              In behandeling
+            </option>
+            <option value="afgerond">Afgerond</option>
+            <option value="geannuleerd">
+              Geannuleerd
+            </option>
+          </select>
         </div>
 
-        <div>
-          <p className="text-xs text-black/40">Locatie</p>
-          <p className="mt-1">
-            {booking.city || "—"}
-          </p>
+        <div className="mt-5">
+          <label className="text-sm font-medium">
+            Interne notitie
+          </label>
+
+          <textarea
+            value={notes}
+            onChange={(event) =>
+              setNotes(event.target.value)
+            }
+            rows={4}
+            placeholder="Bijvoorbeeld: klant gebeld, extra uur besproken..."
+            className="mt-2 w-full resize-none rounded-xl border border-black/10 bg-white px-4 py-3 text-sm outline-none focus:border-black"
+          />
+        </div>
+
+        <div className="mt-5 flex justify-end">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="rounded-xl bg-black px-5 py-3 text-sm font-medium text-white transition hover:bg-black/80 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {saving ? "Opslaan..." : "Wijzigingen opslaan"}
+          </button>
         </div>
       </div>
+    </>
+  );
+}
+
+function DetailSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-2xl border border-black/10 bg-white p-6">
+      <h3 className="mb-5 text-lg font-semibold">
+        {title}
+      </h3>
+
+      <div className="space-y-4">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function DetailRow({
+  label,
+  value,
+  href,
+}: {
+  label: string;
+  value: string;
+  href?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-1 border-b border-black/5 pb-3 last:border-0 last:pb-0 sm:flex-row sm:justify-between sm:gap-4">
+      <span className="text-sm text-black/40">
+        {label}
+      </span>
+
+      {href ? (
+        <a
+          href={href}
+          className="break-all text-sm font-medium hover:underline sm:text-right"
+        >
+          {value}
+        </a>
+      ) : (
+        <span className="text-sm font-medium sm:text-right">
+          {value}
+        </span>
+      )}
     </div>
   );
 }
@@ -402,4 +659,15 @@ function Placeholder({
       </div>
     </div>
   );
+}
+
+function formatDate(dateString: string) {
+  const date = new Date(`${dateString}T00:00:00`);
+
+  return date.toLocaleDateString("nl-NL", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 }
