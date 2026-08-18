@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 type Tab = "dashboard" | "agenda" | "bookings" | "availability";
 
@@ -77,6 +78,9 @@ const TIME_SLOTS = [
 ];
 
 export default function AdminPage() {
+  const searchParams = useSearchParams();
+  const bookingId = searchParams.get("booking");
+
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
 
   const [stats, setStats] = useState<DashboardStats>({
@@ -112,9 +116,20 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => {
-    if (activeTab !== "bookings") return;
-    loadBookings();
-  }, [activeTab]);
+  if (activeTab !== "bookings") return;
+  loadBookings();
+}, [activeTab]);
+
+useEffect(() => {
+  if (!bookingId || bookings.length === 0) return;
+
+  const booking = bookings.find((item) => item.id === bookingId);
+
+  if (booking) {
+    setSelectedBooking(booking);
+    setActiveTab("bookings");
+  }
+}, [bookingId, bookings]);
 
   async function loadBookings() {
     setBookingsLoading(true);
