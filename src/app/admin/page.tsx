@@ -12,6 +12,36 @@ type DashboardStats = {
   popularEventType: string | null;
 };
 
+type Booking = {
+  id: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  package: string;
+  eventType: string;
+  firstName: string;
+  lastName: string;
+  company: string | null;
+  phone: string;
+  email: string;
+  address: string | null;
+  postalCode: string | null;
+  city: string | null;
+  message: string | null;
+  termsAccepted: boolean;
+  status:
+    | "nieuw"
+    | "goedgekeurd"
+    | "in_behandeling"
+    | "afgerond"
+    | "geannuleerd";
+  adminNotes: string | null;
+  approvedBy: string | null;
+  approvedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
 
@@ -23,7 +53,9 @@ export default function AdminPage() {
     popularEventType: null,
   });
 
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [bookingsLoading, setBookingsLoading] = useState(false);
 
   useEffect(() => {
     fetch("/api/admin/stats")
@@ -41,6 +73,26 @@ export default function AdminPage() {
       });
   }, []);
 
+  useEffect(() => {
+    if (activeTab !== "bookings") return;
+
+    setBookingsLoading(true);
+
+    fetch("/api/admin/bookings")
+      .then((response) => response.json())
+      .then((data) => {
+        if (!data.error) {
+          setBookings(data.bookings ?? []);
+        }
+      })
+      .catch((error) => {
+        console.error("Boekingen ophalen mislukt:", error);
+      })
+      .finally(() => {
+        setBookingsLoading(false);
+      });
+  }, [activeTab]);
+
   const tabs: { id: Tab; label: string; icon: string }[] = [
     { id: "dashboard", label: "Dashboard", icon: "⌂" },
     { id: "agenda", label: "Agenda", icon: "▣" },
@@ -51,7 +103,6 @@ export default function AdminPage() {
   return (
     <main className="min-h-screen bg-[#faf9f7] text-[#171717]">
       <div className="mx-auto flex min-h-screen max-w-7xl flex-col md:flex-row">
-        {/* Sidebar */}
         <aside className="w-full border-b border-black/10 bg-white md:min-h-screen md:w-64 md:border-b-0 md:border-r">
           <div className="p-6">
             <div className="mb-8">
@@ -83,7 +134,6 @@ export default function AdminPage() {
           </div>
         </aside>
 
-        {/* Content */}
         <section className="flex-1 p-5 md:p-10">
           {activeTab === "dashboard" && (
             <Dashboard stats={stats} loading={loading} />
@@ -91,7 +141,12 @@ export default function AdminPage() {
 
           {activeTab === "agenda" && <Placeholder title="Agenda" />}
 
-          {activeTab === "bookings" && <Placeholder title="Boekingen" />}
+          {activeTab === "bookings" && (
+            <BookingsList
+              bookings={bookings}
+              loading={bookingsLoading}
+            />
+          )}
 
           {activeTab === "availability" && (
             <Placeholder title="Beschikbaarheid" />
@@ -174,6 +229,137 @@ function Dashboard({
   );
 }
 
+function BookingsList({
+  bookings,
+  loading,
+}: {
+  bookings: Booking[];
+  loading: boolean;
+}) {
+  return (
+    <>
+      <div className="mb-8">
+        <p className="text-sm text-black/40">HeyNoona beheer</p>
+
+        <h2 className="mt-1 text-3xl font-semibold tracking-tight">
+          Boekingen
+        </h2>
+
+        <p className="mt-2 text-black/50">
+          Alle aanvragen en boekingen vanuit je website.
+        </p>
+      </div>
+
+      {loading ? (
+        <div className="rounded-2xl border border-black/10 bg-white p-10 text-center">
+          <p className="text-black/40">
+            Boekingen laden...
+          </p>
+        </div>
+      ) : bookings.length === 0 ? (
+        <div className="rounded-2xl border border-black/10 bg-white p-10 text-center">
+          <p className="text-black/40">
+            Er zijn nog geen boekingen.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {bookings.map((booking) => (
+            <BookingCard
+              key={booking.id}
+              booking={booking}
+            />
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+function BookingCard({
+  booking,
+}: {
+  booking: Booking;
+}) {
+  const date = new Date(`${booking.date}T00:00:00`);
+
+  const formattedDate = date.toLocaleDateString("nl-NL", {
+    weekday: "short",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  const statusLabels: Record<Booking["status"], string> = {
+    nieuw: "Nieuw",
+    goedgekeurd: "Goedgekeurd",
+    in_behandeling: "In behandeling",
+    afgerond: "Afgerond",
+    geannuleerd: "Geannuleerd",
+  };
+
+  return (
+    <div className="rounded-2xl border border-black/10 bg-white p-5">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="font-semibold">
+              {booking.firstName} {booking.lastName}
+            </h3>
+
+            <span className="rounded-full bg-black/5 px-3 py-1 text-xs font-medium">
+              {statusLabels[booking.status]}
+            </span>
+          </div>
+
+          <p className="mt-1 text-sm text-black/50">
+            {formattedDate} · {booking.startTime} – {booking.endTime}
+          </p>
+        </div>
+
+        <div className="text-left md:text-right">
+          <p className="text-sm font-medium">
+            {booking.package}
+          </p>
+
+          <p className="text-sm text-black/50">
+            {booking.eventType}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-3 border-t border-black/5 pt-5 text-sm md:grid-cols-3">
+        <div>
+          <p className="text-xs text-black/40">E-mail</p>
+          <a
+            href={`mailto:${booking.email}`}
+            className="mt-1 block break-all hover:underline"
+          >
+            {booking.email}
+          </a>
+        </div>
+
+        <div>
+          <p className="text-xs text-black/40">Telefoon</p>
+          <a
+            href={`tel:${booking.phone}`}
+            className="mt-1 block hover:underline"
+          >
+            {booking.phone}
+          </a>
+        </div>
+
+        <div>
+          <p className="text-xs text-black/40">Locatie</p>
+          <p className="mt-1">
+            {booking.city || "—"}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function StatCard({
   label,
   value,
@@ -183,7 +369,9 @@ function StatCard({
 }) {
   return (
     <div className="rounded-2xl border border-black/10 bg-white p-5">
-      <p className="text-sm text-black/40">{label}</p>
+      <p className="text-sm text-black/40">
+        {label}
+      </p>
 
       <p className="mt-2 text-3xl font-semibold">
         {value}
@@ -192,7 +380,11 @@ function StatCard({
   );
 }
 
-function Placeholder({ title }: { title: string }) {
+function Placeholder({
+  title,
+}: {
+  title: string;
+}) {
   return (
     <div>
       <p className="text-sm text-black/40">
