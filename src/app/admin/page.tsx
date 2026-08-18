@@ -44,6 +44,21 @@ type Booking = {
   updatedAt: string;
 };
 
+type BlockedDate = {
+  id: string;
+  date: string;
+  reason: string | null;
+  createdAt: string;
+};
+
+type BlockedSlot = {
+  id: string;
+  date: string;
+  startTime: string;
+  reason: string | null;
+  createdAt: string;
+};
+
 const statusLabels: Record<BookingStatus, string> = {
   nieuw: "Nieuw",
   goedgekeurd: "Goedgekeurd",
@@ -51,6 +66,15 @@ const statusLabels: Record<BookingStatus, string> = {
   afgerond: "Afgerond",
   geannuleerd: "Geannuleerd",
 };
+
+const TIME_SLOTS = [
+  { start: "10:00", end: "12:00" },
+  { start: "12:00", end: "14:00" },
+  { start: "14:00", end: "16:00" },
+  { start: "16:00", end: "18:00" },
+  { start: "18:00", end: "20:00" },
+  { start: "20:00", end: "22:00" },
+];
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<Tab>("dashboard");
@@ -89,7 +113,6 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (activeTab !== "bookings") return;
-
     loadBookings();
   }, [activeTab]);
 
@@ -194,9 +217,7 @@ export default function AdminPage() {
             <Dashboard stats={stats} loading={loading} />
           )}
 
-          {activeTab === "agenda" && (
-            <Placeholder title="Agenda" />
-          )}
+          {activeTab === "agenda" && <Placeholder title="Agenda" />}
 
           {activeTab === "bookings" && (
             <>
@@ -216,14 +237,14 @@ export default function AdminPage() {
             </>
           )}
 
-          {activeTab === "availability" && (
-            <Placeholder title="Beschikbaarheid" />
-          )}
+          {activeTab === "availability" && <Availability />}
         </section>
       </div>
     </main>
   );
 }
+
+/* ---------------- DASHBOARD ---------------- */
 
 function Dashboard({
   stats,
@@ -273,9 +294,7 @@ function Dashboard({
 
         <div className="mt-5 space-y-4 text-sm">
           <div className="flex items-center justify-between border-b border-black/5 pb-4">
-            <span className="text-black/50">
-              Populair evenement
-            </span>
+            <span className="text-black/50">Populair evenement</span>
 
             <span className="font-medium">
               {stats.popularEventType ?? "—"}
@@ -283,19 +302,17 @@ function Dashboard({
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="text-black/50">
-              Aankomende boekingen
-            </span>
+            <span className="text-black/50">Aankomende boekingen</span>
 
-            <span className="font-medium">
-              {stats.upcoming}
-            </span>
+            <span className="font-medium">{stats.upcoming}</span>
           </div>
         </div>
       </div>
     </>
   );
 }
+
+/* ---------------- BOEKINGEN ---------------- */
 
 function BookingsList({
   bookings,
@@ -322,15 +339,11 @@ function BookingsList({
 
       {loading ? (
         <div className="rounded-2xl border border-black/10 bg-white p-10 text-center">
-          <p className="text-black/40">
-            Boekingen laden...
-          </p>
+          <p className="text-black/40">Boekingen laden...</p>
         </div>
       ) : bookings.length === 0 ? (
         <div className="rounded-2xl border border-black/10 bg-white p-10 text-center">
-          <p className="text-black/40">
-            Er zijn nog geen boekingen.
-          </p>
+          <p className="text-black/40">Er zijn nog geen boekingen.</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -359,9 +372,7 @@ function BookingsList({
                 </div>
 
                 <div className="text-left md:text-right">
-                  <p className="text-sm font-medium">
-                    {booking.package}
-                  </p>
+                  <p className="text-sm font-medium">{booking.package}</p>
 
                   <p className="text-sm text-black/50">
                     {booking.eventType}
@@ -391,14 +402,8 @@ function BookingDetail({
     }
   ) => void;
 }) {
-  const [status, setStatus] = useState<BookingStatus>(
-    booking.status
-  );
-
-  const [notes, setNotes] = useState(
-    booking.adminNotes ?? ""
-  );
-
+  const [status, setStatus] = useState<BookingStatus>(booking.status);
+  const [notes, setNotes] = useState(booking.adminNotes ?? "");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -427,9 +432,7 @@ function BookingDetail({
       </button>
 
       <div className="mb-8">
-        <p className="text-sm text-black/40">
-          Boeking
-        </p>
+        <p className="text-sm text-black/40">Boeking</p>
 
         <h2 className="mt-1 text-3xl font-semibold tracking-tight">
           {booking.firstName} {booking.lastName}
@@ -443,25 +446,16 @@ function BookingDetail({
 
       <div className="grid gap-5 lg:grid-cols-2">
         <DetailSection title="Evenement">
-          <DetailRow
-            label="Datum"
-            value={formatDate(booking.date)}
-          />
+          <DetailRow label="Datum" value={formatDate(booking.date)} />
 
           <DetailRow
             label="Tijd"
             value={`${booking.startTime} – ${booking.endTime}`}
           />
 
-          <DetailRow
-            label="Pakket"
-            value={booking.package}
-          />
+          <DetailRow label="Pakket" value={booking.package} />
 
-          <DetailRow
-            label="Evenement"
-            value={booking.eventType}
-          />
+          <DetailRow label="Evenement" value={booking.eventType} />
         </DetailSection>
 
         <DetailSection title="Klant">
@@ -471,10 +465,7 @@ function BookingDetail({
           />
 
           {booking.company && (
-            <DetailRow
-              label="Bedrijf"
-              value={booking.company}
-            />
+            <DetailRow label="Bedrijf" value={booking.company} />
           )}
 
           <DetailRow
@@ -506,14 +497,10 @@ function BookingDetail({
       </div>
 
       <div className="mt-5 rounded-2xl border border-black/10 bg-white p-6">
-        <h3 className="text-lg font-semibold">
-          Beheer
-        </h3>
+        <h3 className="text-lg font-semibold">Beheer</h3>
 
         <div className="mt-5">
-          <label className="text-sm font-medium">
-            Status
-          </label>
+          <label className="text-sm font-medium">Status</label>
 
           <select
             value={status}
@@ -523,29 +510,19 @@ function BookingDetail({
             className="mt-2 w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm outline-none focus:border-black md:max-w-md"
           >
             <option value="nieuw">Nieuw</option>
-            <option value="goedgekeurd">
-              Goedgekeurd
-            </option>
-            <option value="in_behandeling">
-              In behandeling
-            </option>
+            <option value="goedgekeurd">Goedgekeurd</option>
+            <option value="in_behandeling">In behandeling</option>
             <option value="afgerond">Afgerond</option>
-            <option value="geannuleerd">
-              Geannuleerd
-            </option>
+            <option value="geannuleerd">Geannuleerd</option>
           </select>
         </div>
 
         <div className="mt-5">
-          <label className="text-sm font-medium">
-            Interne notitie
-          </label>
+          <label className="text-sm font-medium">Interne notitie</label>
 
           <textarea
             value={notes}
-            onChange={(event) =>
-              setNotes(event.target.value)
-            }
+            onChange={(event) => setNotes(event.target.value)}
             rows={4}
             placeholder="Bijvoorbeeld: klant gebeld, extra uur besproken..."
             className="mt-2 w-full resize-none rounded-xl border border-black/10 bg-white px-4 py-3 text-sm outline-none focus:border-black"
@@ -566,6 +543,411 @@ function BookingDetail({
   );
 }
 
+/* ---------------- BESCHIKBAARHEID ---------------- */
+
+function Availability() {
+  const [blockedDates, setBlockedDates] = useState<BlockedDate[]>([]);
+  const [blockedSlots, setBlockedSlots] = useState<BlockedSlot[]>([]);
+
+  const [loading, setLoading] = useState(true);
+
+  const [date, setDate] = useState("");
+  const [slotDate, setSlotDate] = useState("");
+  const [startTime, setStartTime] = useState(TIME_SLOTS[0].start);
+
+  const [dateReason, setDateReason] = useState("");
+  const [slotReason, setSlotReason] = useState("");
+
+  const [savingDate, setSavingDate] = useState(false);
+  const [savingSlot, setSavingSlot] = useState(false);
+
+  useEffect(() => {
+    loadAvailability();
+  }, []);
+
+  async function loadAvailability() {
+    setLoading(true);
+
+    try {
+      const response = await fetch("/api/admin/availability");
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error);
+      }
+
+      setBlockedDates(data.dates ?? []);
+      setBlockedSlots(data.slots ?? []);
+    } catch (error) {
+      console.error("Beschikbaarheid ophalen mislukt:", error);
+      alert("Beschikbaarheid kon niet worden opgehaald.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function blockDate() {
+    if (!date) {
+      alert("Kies eerst een datum.");
+      return;
+    }
+
+    setSavingDate(true);
+
+    try {
+      const response = await fetch("/api/admin/availability", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          type: "date",
+          date,
+          reason: dateReason,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error);
+      }
+
+      setBlockedDates((current) => [...current, data.date]);
+      setDate("");
+      setDateReason("");
+    } catch (error) {
+      console.error(error);
+      alert("Dag blokkeren mislukt.");
+    } finally {
+      setSavingDate(false);
+    }
+  }
+
+  async function blockSlot() {
+    if (!slotDate) {
+      alert("Kies eerst een datum.");
+      return;
+    }
+
+    setSavingSlot(true);
+
+    try {
+      const response = await fetch("/api/admin/availability", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          type: "slot",
+          date: slotDate,
+          startTime,
+          reason: slotReason,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error);
+      }
+
+      setBlockedSlots((current) => [...current, data.slot]);
+      setSlotDate("");
+      setSlotReason("");
+    } catch (error) {
+      console.error(error);
+      alert("Tijdslot blokkeren mislukt.");
+    } finally {
+      setSavingSlot(false);
+    }
+  }
+
+  async function removeBlock(
+    type: "date" | "slot",
+    id: string
+  ) {
+    try {
+      const response = await fetch("/api/admin/availability", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          type,
+          id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error);
+      }
+
+      if (type === "date") {
+        setBlockedDates((current) =>
+          current.filter((item) => item.id !== id)
+        );
+      } else {
+        setBlockedSlots((current) =>
+          current.filter((item) => item.id !== id)
+        );
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Blokkade verwijderen mislukt.");
+    }
+  }
+
+  return (
+    <>
+      <div className="mb-8">
+        <p className="text-sm text-black/40">HeyNoona beheer</p>
+
+        <h2 className="mt-1 text-3xl font-semibold tracking-tight">
+          Beschikbaarheid
+        </h2>
+
+        <p className="mt-2 max-w-2xl text-black/50">
+          Zet dagen of specifieke tijdsloten dicht wanneer HeyNoona niet
+          beschikbaar is.
+        </p>
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-2">
+        {/* Hele dag blokkeren */}
+        <div className="rounded-2xl border border-black/10 bg-white p-6">
+          <h3 className="text-lg font-semibold">
+            Hele dag blokkeren
+          </h3>
+
+          <p className="mt-1 text-sm text-black/50">
+            De hele dag wordt onbeschikbaar voor nieuwe boekingen.
+          </p>
+
+          <div className="mt-5">
+            <label className="text-sm font-medium">
+              Datum
+            </label>
+
+            <input
+              type="date"
+              value={date}
+              onChange={(event) => setDate(event.target.value)}
+              className="mt-2 w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm outline-none focus:border-black"
+            />
+          </div>
+
+          <div className="mt-4">
+            <label className="text-sm font-medium">
+              Reden <span className="font-normal text-black/40">(optioneel)</span>
+            </label>
+
+            <input
+              type="text"
+              value={dateReason}
+              onChange={(event) => setDateReason(event.target.value)}
+              placeholder="Bijvoorbeeld: vakantie"
+              className="mt-2 w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm outline-none focus:border-black"
+            />
+          </div>
+
+          <button
+            onClick={blockDate}
+            disabled={savingDate}
+            className="mt-5 w-full rounded-xl bg-black px-5 py-3 text-sm font-medium text-white transition hover:bg-black/80 disabled:opacity-50"
+          >
+            {savingDate ? "Blokkeren..." : "Hele dag blokkeren"}
+          </button>
+        </div>
+
+        {/* Tijdslot blokkeren */}
+        <div className="rounded-2xl border border-black/10 bg-white p-6">
+          <h3 className="text-lg font-semibold">
+            Tijdslot blokkeren
+          </h3>
+
+          <p className="mt-1 text-sm text-black/50">
+            Alleen het gekozen tijdslot wordt onbeschikbaar.
+          </p>
+
+          <div className="mt-5">
+            <label className="text-sm font-medium">
+              Datum
+            </label>
+
+            <input
+              type="date"
+              value={slotDate}
+              onChange={(event) => setSlotDate(event.target.value)}
+              className="mt-2 w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm outline-none focus:border-black"
+            />
+          </div>
+
+          <div className="mt-4">
+            <label className="text-sm font-medium">
+              Tijd
+            </label>
+
+            <select
+              value={startTime}
+              onChange={(event) => setStartTime(event.target.value)}
+              className="mt-2 w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm outline-none focus:border-black"
+            >
+              {TIME_SLOTS.map((slot) => (
+                <option key={slot.start} value={slot.start}>
+                  {slot.start} – {slot.end}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="mt-4">
+            <label className="text-sm font-medium">
+              Reden <span className="font-normal text-black/40">(optioneel)</span>
+            </label>
+
+            <input
+              type="text"
+              value={slotReason}
+              onChange={(event) => setSlotReason(event.target.value)}
+              placeholder="Bijvoorbeeld: privé-afspraak"
+              className="mt-2 w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm outline-none focus:border-black"
+            />
+          </div>
+
+          <button
+            onClick={blockSlot}
+            disabled={savingSlot}
+            className="mt-5 w-full rounded-xl bg-black px-5 py-3 text-sm font-medium text-white transition hover:bg-black/80 disabled:opacity-50"
+          >
+            {savingSlot ? "Blokkeren..." : "Tijdslot blokkeren"}
+          </button>
+        </div>
+      </div>
+
+      {/* Geblokkeerde dagen */}
+      <div className="mt-8 rounded-2xl border border-black/10 bg-white p-6">
+        <h3 className="text-lg font-semibold">
+          Geblokkeerde dagen
+        </h3>
+
+        {loading ? (
+          <p className="mt-5 text-sm text-black/40">
+            Laden...
+          </p>
+        ) : blockedDates.length === 0 ? (
+          <p className="mt-5 text-sm text-black/40">
+            Er zijn momenteel geen hele dagen geblokkeerd.
+          </p>
+        ) : (
+          <div className="mt-5 space-y-3">
+            {blockedDates
+              .sort((a, b) => a.date.localeCompare(b.date))
+              .map((item) => (
+                <div
+                  key={item.id}
+                  className="flex flex-col gap-3 rounded-xl border border-black/5 bg-[#faf9f7] p-4 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div>
+                    <p className="font-medium">
+                      {formatDate(item.date)}
+                    </p>
+
+                    {item.reason && (
+                      <p className="mt-1 text-sm text-black/50">
+                        {item.reason}
+                      </p>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() =>
+                      removeBlock("date", item.id)
+                    }
+                    className="text-left text-sm font-medium text-red-600 hover:text-red-700 sm:text-right"
+                  >
+                    Blokkade verwijderen
+                  </button>
+                </div>
+              ))}
+          </div>
+        )}
+      </div>
+
+      {/* Geblokkeerde tijdsloten */}
+      <div className="mt-5 rounded-2xl border border-black/10 bg-white p-6">
+        <h3 className="text-lg font-semibold">
+          Geblokkeerde tijdsloten
+        </h3>
+
+        {loading ? (
+          <p className="mt-5 text-sm text-black/40">
+            Laden...
+          </p>
+        ) : blockedSlots.length === 0 ? (
+          <p className="mt-5 text-sm text-black/40">
+            Er zijn momenteel geen tijdsloten geblokkeerd.
+          </p>
+        ) : (
+          <div className="mt-5 space-y-3">
+            {blockedSlots
+              .sort((a, b) => {
+                const dateCompare = a.date.localeCompare(b.date);
+
+                if (dateCompare !== 0) {
+                  return dateCompare;
+                }
+
+                return a.startTime.localeCompare(b.startTime);
+              })
+              .map((item) => {
+                const slot = TIME_SLOTS.find(
+                  (slot) => slot.start === item.startTime
+                );
+
+                return (
+                  <div
+                    key={item.id}
+                    className="flex flex-col gap-3 rounded-xl border border-black/5 bg-[#faf9f7] p-4 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div>
+                      <p className="font-medium">
+                        {formatDate(item.date)}
+                      </p>
+
+                      <p className="mt-1 text-sm text-black/50">
+                        {item.startTime} – {slot?.end ?? ""}
+                      </p>
+
+                      {item.reason && (
+                        <p className="mt-1 text-sm text-black/40">
+                          {item.reason}
+                        </p>
+                      )}
+                    </div>
+
+                    <button
+                      onClick={() =>
+                        removeBlock("slot", item.id)
+                      }
+                      className="text-left text-sm font-medium text-red-600 hover:text-red-700 sm:text-right"
+                    >
+                      Blokkade verwijderen
+                    </button>
+                  </div>
+                );
+              })}
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+/* ---------------- HULPCOMPONENTEN ---------------- */
+
 function DetailSection({
   title,
   children,
@@ -575,13 +957,9 @@ function DetailSection({
 }) {
   return (
     <div className="rounded-2xl border border-black/10 bg-white p-6">
-      <h3 className="mb-5 text-lg font-semibold">
-        {title}
-      </h3>
+      <h3 className="mb-5 text-lg font-semibold">{title}</h3>
 
-      <div className="space-y-4">
-        {children}
-      </div>
+      <div className="space-y-4">{children}</div>
     </div>
   );
 }
@@ -597,9 +975,7 @@ function DetailRow({
 }) {
   return (
     <div className="flex flex-col gap-1 border-b border-black/5 pb-3 last:border-0 last:pb-0 sm:flex-row sm:justify-between sm:gap-4">
-      <span className="text-sm text-black/40">
-        {label}
-      </span>
+      <span className="text-sm text-black/40">{label}</span>
 
       {href ? (
         <a
@@ -626,27 +1002,17 @@ function StatCard({
 }) {
   return (
     <div className="rounded-2xl border border-black/10 bg-white p-5">
-      <p className="text-sm text-black/40">
-        {label}
-      </p>
+      <p className="text-sm text-black/40">{label}</p>
 
-      <p className="mt-2 text-3xl font-semibold">
-        {value}
-      </p>
+      <p className="mt-2 text-3xl font-semibold">{value}</p>
     </div>
   );
 }
 
-function Placeholder({
-  title,
-}: {
-  title: string;
-}) {
+function Placeholder({ title }: { title: string }) {
   return (
     <div>
-      <p className="text-sm text-black/40">
-        HeyNoona beheer
-      </p>
+      <p className="text-sm text-black/40">HeyNoona beheer</p>
 
       <h2 className="mt-1 text-3xl font-semibold tracking-tight">
         {title}
