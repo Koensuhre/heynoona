@@ -51,3 +51,20 @@ export default function RootLayout({
     </html>
   );
 }
+
+import { GoogleAnalytics } from '@next/third-parties/google'
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="nl">
+      <body>
+        {children}
+        <GoogleAnalytics gaId="G-QL1GZWNS3Y" />
+      </body>
+    </html>
+  )
+}
