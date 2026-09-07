@@ -57,3 +57,14 @@ export default function RootLayout({
     </html>
   );
 }
+
+import { GoogleTagManager } from '@next/third-parties/google';
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="nl">
+      <GoogleTagManager gtmId="GTM-PSZ3KMNV" />
+      <body>{children}</body>
+    </html>
+  );
+}
