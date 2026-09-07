@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Cormorant_Garamond } from "next/font/google";
-import { GoogleAnalytics } from '@next/third-parties/google'
+import { GoogleAnalytics, GoogleTagManager } from '@next/third-parties/google';
 import "./globals.css";
-
 
 const inter = Inter({
   variable: "--font-inter",
@@ -10,14 +9,12 @@ const inter = Inter({
   display: "swap",
 });
 
-
 const cormorant = Cormorant_Garamond({
   variable: "--font-cormorant",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
 });
-
 
 export const metadata: Metadata = {
   title: "HeyNoona | Exclusieve Photobooth voor Elk Event",
@@ -42,7 +39,6 @@ export const metadata: Metadata = {
   },
 };
 
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -51,20 +47,10 @@ export default function RootLayout({
   return (
     <html lang="nl" className={`${inter.variable} ${cormorant.variable} scroll-smooth`}>
       <body className="min-h-screen bg-background text-foreground antialiased">
+        <GoogleTagManager gtmId="GTM-PSZ3KMNV" />
         {children}
         <GoogleAnalytics gaId="G-QL1GZWNS3Y" />
       </body>
-    </html>
-  );
-}
-
-import { GoogleTagManager } from '@next/third-parties/google';
-
-export default function RootLayout({ children }) {
-  return (
-    <html lang="nl">
-      <GoogleTagManager gtmId="GTM-PSZ3KMNV" />
-      <body>{children}</body>
     </html>
   );
 }
