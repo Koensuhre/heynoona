@@ -62,7 +62,7 @@ export default function Footer() {
   rel="noopener noreferrer"
   className="transition-colors hover:text-foreground"
 >
-  Design Web Agency Twente
+  Design door Web Agency Twente
 </a>
           </p>
           <p className="text-xs text-foreground/30">
